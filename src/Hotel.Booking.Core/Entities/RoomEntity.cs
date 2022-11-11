@@ -63,14 +63,4 @@
     //    }
     //}
 
-
-
-    
-
-    public enum BookingStatus
-    {
-        FreeRoom = 1,
-        RoomBooked = 2,
-        BookingCanceled = 3
-    }
 }

@@ -1,3 +1,4 @@
+using Hotel.Booking.Core;
 using Hotel.Booking.Core.Models;
 using Hotel.Booking.Infra.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ namespace Hotel.Booking.Api.Controllers
         {
             try
             {
-                var booking = await _dbContext.Bookings.AsNoTracking().ToListAsync();
+                var booking = await _dbContext.Bookings.AsNoTracking().Where(_=>_.BookingStatus.Equals(BookingStatusValueObject.RoomBooked)).ToListAsync();
                 if (booking != null)
                 {
                     return Ok(new

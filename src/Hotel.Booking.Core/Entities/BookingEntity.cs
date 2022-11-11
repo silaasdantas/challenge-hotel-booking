@@ -10,7 +10,7 @@
         public Guid RoomId { get; set; }
         public int AdvanceBookingDaysLimit { get; set; }
         public int StayLimit { get; set; }
-        public BookingStatus BookingStatus { get; set; }
+        public BookingStatusValueObject BookingStatus { get; set; }
         public DateTime CreatedAt { get; set; }
         public virtual RoomEntity Room { get; set; }
 
@@ -22,7 +22,7 @@
             RoomId = roomId;
             StayLimit = 3;
             AdvanceBookingDaysLimit = 30;
-            BookingStatus = BookingStatus.RoomBooked;
+            BookingStatus = BookingStatusValueObject.RoomBooked;
             CreatedAt = DateTime.Now;
         }
 
@@ -50,7 +50,7 @@
 
         public void Cancel()
         {
-            BookingStatus = BookingStatus.BookingCanceled;
+            BookingStatus = BookingStatusValueObject.BookingCanceled;
         }
 
         public (bool IsSucess, string errorMessage) Update(DateTime checkIn, DateTime checkOut)
