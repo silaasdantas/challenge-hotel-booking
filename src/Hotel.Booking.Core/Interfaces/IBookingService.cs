@@ -1,4 +1,4 @@
-﻿namespace Hotel.Booking.Core.Services.Interfaces
+﻿namespace Hotel.Booking.Core.Interfaces
 {
     public interface IBookingService
     {
