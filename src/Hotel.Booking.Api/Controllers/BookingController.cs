@@ -16,34 +16,42 @@ namespace Hotel.Booking.Api.Controllers
         {
             _logger = logger;
             _dbContext = dbContext;
-            SeedData();
         }
 
-
-        [HttpGet("rooms")]
-        public async Task<IActionResult> GetAsync()
+        [HttpGet]
+        public async Task<IActionResult> GetAllBookingAsync()
         {
-            var result = await _dbContext.Rooms.AsNoTracking().Where(_ => _.IsActive).ToListAsync();
-            if (result != null)
-                return Ok(result);
+            try
+            {
+                var booking = await _dbContext.Bookings.AsNoTracking().ToListAsync();
+                if (booking != null)
+                {
+                    return Ok(new
+                    {
+                        data = new
+                        {
+                            booking
+                        }
+                    });
+                }
 
-            return NotFound();
+                return NotFound(new
+                {
+                    data = new { },
+
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    data = new { },
+                    error = ex.Message
+                });
+            }
         }
 
-
-        [HttpGet("check-room-availability")]
-        public async Task<IActionResult> CheckRoomAvailabilityAsync([FromQuery] Guid roomId, DateTime checkIn, DateTime checkOut)
-        {
-            var result = !await _dbContext.Bookings.Include(_ => _.Room)
-                .AnyAsync(_ => _.RoomId.Equals(roomId)
-                && _.CheckIn.Date <= checkIn.Date && _.CheckOut.Date >= checkIn.Date
-                || _.CheckIn.Date <= checkOut.Date && _.CheckOut.Date >= checkIn.Date
-                );
-
-            return Ok(new { availability = result });
-        }
-
-        [HttpGet()]
+        [HttpGet("{bookingId}")]
         public async Task<IActionResult> GetBookingAsync(Guid bookingId)
         {
             try
@@ -208,18 +216,6 @@ namespace Hotel.Booking.Api.Controllers
                     data = new { },
                     error = ex.Message
                 });
-            }
-        }
-
-        private void SeedData()
-        {
-            if (!_dbContext.Rooms.Any())
-            {
-                var roomSeed = new RoomEntity("Premium Suite, Lagoon View", true);
-                _dbContext.Rooms.Add(roomSeed);
-                //_dbContext.Bookings.Add(new BookingEntity(DateTime.Now, DateTime.Now.AddDays(3), roomSeed.Id));
-                //_dbContext.Bookings.Add(new BookingEntity(DateTime.Now.AddDays(10), DateTime.Now.AddDays(12), roomSeed.Id));
-                _dbContext.SaveChanges();
             }
         }
     }
