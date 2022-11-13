@@ -11,11 +11,17 @@ namespace Hotel.Booking.Core.Services
         private readonly ILogger<RoomService> _logger;
         public readonly IEfRepository<RoomEntity> _repository;
         public readonly IEfRepository<BookingEntity> _repositoryBooking;
+        public readonly IRoomRespository _roomRespository;
         private readonly IMapper _mapper;
 
-        public RoomService(IEfRepository<RoomEntity> repository, IEfRepository<BookingEntity> repositoryBooking, ILogger<RoomService> logger, IMapper mapper)
+        public RoomService(IEfRepository<RoomEntity> repository, 
+            IEfRepository<BookingEntity> repositoryBooking,
+            IRoomRespository roomRespository,
+            ILogger<RoomService> logger, 
+            IMapper mapper)
         {
             _repository = repository;
+            _roomRespository = roomRespository;
             _repositoryBooking = repositoryBooking;
             _logger = logger;
             _mapper = mapper;
@@ -49,20 +55,14 @@ namespace Hotel.Booking.Core.Services
             {
                 var room = await _repository.GetByIdAsync(roomId);
                 if (room == null)
-                {
                     return (false, string.Empty, "Room not found");
-                }
 
-                var result = !await _repositoryBooking.AnyAsync(_ =>
-                       _.RoomId.Equals(roomId)
-                    && _.CheckIn.Date <= checkIn.Date && _.CheckOut.Date >= checkIn.Date
-                    || _.CheckIn.Date <= checkOut.Date && _.CheckOut.Date >= checkIn.Date);
+                var result = await _roomRespository.CheckRoomAvailabilityAsync(roomId, checkIn, checkOut);
 
-
-                if (result)
+                if (result.Equals(RoomStatusValueObject.Available))
                     return (true, RoomStatusValueObject.Available.ToString(), "Room available to book.");
                 else
-                    return (true, RoomStatusValueObject.Booked.ToString(), "Room not available to book.");
+                    return (true, RoomStatusValueObject.Booked.ToString(), "Room not available for booking on this date.");
             }
             catch (Exception ex)
             {

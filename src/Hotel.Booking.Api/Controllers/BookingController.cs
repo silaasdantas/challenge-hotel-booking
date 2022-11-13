@@ -56,7 +56,7 @@ namespace Hotel.Booking.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> BookAsync(CreateBookingCommand command)
+        public async Task<IActionResult> BookAsync(CreateBooking command)
         {
             try
             {
@@ -74,7 +74,7 @@ namespace Hotel.Booking.Api.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateAsync(UpdateBookingCommand command)
+        public async Task<IActionResult> UpdateAsync(UpdateBooking command)
         {
             try
             {

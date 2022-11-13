@@ -54,7 +54,7 @@ namespace Hotel.Booking.Core.Services
             }
         }
 
-        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> BookRoomAsync(CreateBookingCommand command)
+        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> BookRoomAsync(CreateBooking command)
         {
             var roomExist = !await _repository.AnyAsync(_ => _.Id.Equals(command.RoomId));
             if (roomExist)
@@ -105,7 +105,7 @@ namespace Hotel.Booking.Core.Services
             return (true, "");
         }
 
-        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> UpdateBookingAsync(UpdateBookingCommand command)
+        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> UpdateBookingAsync(UpdateBooking command)
         {
             var booking = await _repository.GetByIdAsync(command.BookingId);
             if (booking != null)

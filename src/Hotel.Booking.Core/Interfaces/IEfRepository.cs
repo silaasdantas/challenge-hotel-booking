@@ -8,8 +8,8 @@ namespace Hotel.Booking.Core.Interfaces
         Task<IEnumerable<T>> GetAllAsync();
         Task<IList<T>> GetAsync(Expression<Func<T, bool>> predicate);
         Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);
-        //IQueryable<T> Get(params Expression<Func<T, object>>[] expressions);
         Task<int> CreateAsync(T entity);
         Task<int> UpdateAsync(T entity);
+        IQueryable<T> GetByQueryable(params Expression<Func<T, object>>[] expressions);
     }
 }

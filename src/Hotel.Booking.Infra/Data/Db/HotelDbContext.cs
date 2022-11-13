@@ -1,11 +1,11 @@
 ﻿using Hotel.Booking.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Hotel.Booking.Infra.Data
+namespace Hotel.Booking.Infra.Data.Db
 {
-    public class BookingContext : DbContext
+    public class HotelDbContext : DbContext
     {
-        public BookingContext(DbContextOptions<BookingContext> options)
+        public HotelDbContext(DbContextOptions<HotelDbContext> options)
             : base(options) { SeedData(); }
 
         public DbSet<RoomEntity> Rooms { get; set; }

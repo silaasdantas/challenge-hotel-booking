@@ -1,6 +1,7 @@
 using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.Services;
-using Hotel.Booking.Infra.Data;
+using Hotel.Booking.Infra.Data.Db;
+using Hotel.Booking.Infra.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Text.Json.Serialization;
@@ -12,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<BookingContext>(opt => opt.UseInMemoryDatabase("BookingDB"));
+builder.Services.AddDbContext<HotelDbContext>(opt => opt.UseInMemoryDatabase("BookingDB"));
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(opt => opt.SuppressMapClientErrors = true)
     .AddJsonOptions(opt =>
@@ -31,6 +32,7 @@ builder.Services.AddHealthChecks();
 
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IRoomRespository, RoomRespository>();
 builder.Services.AddScoped(typeof(IEfRepository<>), typeof(EfRepository<>));
 
 

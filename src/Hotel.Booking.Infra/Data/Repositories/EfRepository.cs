@@ -1,16 +1,17 @@
 ﻿using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.Models;
+using Hotel.Booking.Infra.Data.Db;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
-namespace Hotel.Booking.Infra.Data
+namespace Hotel.Booking.Infra.Data.Repositories
 {
     public class EfRepository<T> : IEfRepository<T> where T : class
     {
         protected readonly DbSet<T> _dbSet;
-        public readonly BookingContext _dbContext;
+        public readonly HotelDbContext _dbContext;
 
-        public EfRepository(BookingContext dbContext)
+        public EfRepository(HotelDbContext dbContext)
         {
             _dbContext = dbContext;
             _dbSet = _dbContext.Set<T>();
@@ -24,7 +25,7 @@ namespace Hotel.Booking.Infra.Data
 
         public async Task<IList<T>> GetAsync(Expression<Func<T, bool>> predicate)
         {
-            return await _dbSet.AsNoTracking().Where(predicate).ToListAsync();        
+            return await _dbSet.AsNoTracking().Where(predicate).ToListAsync();
         }
 
         public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate)
@@ -32,25 +33,12 @@ namespace Hotel.Booking.Infra.Data
             return await _dbSet.AsNoTracking().AnyAsync(predicate);
         }
 
-        public async Task<IList<T>> GetTestAsync(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] expressions)
-        {
-            if (expressions.Any())
-            {
-                var query = _dbSet.AsQueryable().AsNoTracking();
-                foreach (var expression in expressions)
-                    query = query.Include(expression);
-                return await query.Where(predicate).ToListAsync();
-            }
-
-            return await _dbSet.AsNoTracking().Where(predicate).ToListAsync();
-        }
-
-        public async Task<IList<T>> GetFindAsync(params Expression<Func<T, object>>[] expressions)
+        public IQueryable<T> GetByQueryable(params Expression<Func<T, object>>[] expressions)
         {
             var query = _dbSet.AsQueryable().AsNoTracking();
             foreach (var expression in expressions)
                 query = query.Include(expression);
-            return await query.ToListAsync();
+            return query;
         }
 
         public Task<int> CreateAsync(T entity)
