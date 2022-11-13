@@ -4,10 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Hotel.Booking.Api.Controllers
 {
-    [ApiController]
     [ApiVersion(ConstantsConfiguration.API_VERSION_1)]
     [Route(ConstantsConfiguration.ROUTE_DEFAULT_CONTROLLER)]
-    public class RoomController : ControllerBase
+    public class RoomController : ApiController
     {
         private readonly ILogger<RoomController> _logger;
         private readonly IRoomService _service;
@@ -24,7 +23,7 @@ namespace Hotel.Booking.Api.Controllers
         {
             var result = await _service.GetAllRoomsActivesAsync();
             if (result.IsSucess)
-                return Ok(result.Rooms);
+                return ResponseOk(result.Rooms);
 
             return NotFound();
         }
@@ -33,19 +32,29 @@ namespace Hotel.Booking.Api.Controllers
         [HttpGet("check-availability")]
         public async Task<IActionResult> CheckRoomAvailabilityAsync([FromQuery] Guid roomId, DateTime checkIn, DateTime checkOut)
         {
-            var result = await _service.CheckRoomAvailabilityAsync(roomId, checkIn, checkOut);
-            if (result.IsSucess)
-                return Ok(new
+            try
+            {
+                var result = await _service.CheckRoomAvailabilityAsync(roomId, checkIn, checkOut);
+                if (result.IsSucess)
+                    return Ok(new
+                    {
+                        result.Status,
+                        result.Message
+                    });
+
+                return NotFound(new
                 {
                     result.Status,
                     result.Message
                 });
-
-            return NotFound(new
+            }
+            catch (Exception ex)
             {
-                result.Status,
-                result.Message
-            });
+                return BadRequest(new
+                {
+                    erros = ex.Message
+                });
+            }
         }
     }
 }

@@ -20,7 +20,7 @@ namespace Hotel.Booking.Core.Services
             _logger = logger;
             _mapper = mapper;
         }
-        public async Task<(bool IsSucess, IList<Models.Booking>? Bookings, string Message)> GetAllBookingAsync()
+        public async Task<(bool IsSucess, IList<Models.Booking> Bookings, string Message)> GetAllBookingAsync()
         {
             try
             {
@@ -28,16 +28,16 @@ namespace Hotel.Booking.Core.Services
                 if (bookings != null && bookings.Any())
                     return (true, _mapper.Map<IEnumerable<BookingEntity>, IList<Models.Booking>>(bookings), string.Empty);
 
-                return (false, null, "Not found");
+                return (false, new List<Models.Booking>(), "Not found");
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex.ToString());
-                return (false, null, ex.Message);
+                return (false, new List<Models.Booking>(), ex.Message);
             }
         }
 
-        public async Task<(bool IsSucess, Models.Booking? Booking, string Message)> GetBookingByIdAsync(Guid bookingId)
+        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> GetBookingByIdAsync(Guid bookingId)
         {
             try
             {
@@ -54,25 +54,27 @@ namespace Hotel.Booking.Core.Services
             }
         }
 
-        public async Task<(bool IsSucess, Models.Booking? Booking, string Message)> BookRoomAsync(CreateBookingCommand command)
+        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> BookRoomAsync(CreateBookingCommand command)
         {
             var roomExist = !await _repository.AnyAsync(_ => _.Id.Equals(command.RoomId));
             if (roomExist)
             {
                 var booking = new BookingEntity(command.CheckIn, command.CheckOut, command.RoomId);
-                var result = IsValidBooking(booking);
 
+                var result = IsValidBooking(booking);
                 if (result.IsSucess)
                 {
-                    var isValidPeriod = !await _repository.AnyAsync(_ =>
-                    _.RoomId.Equals(command.RoomId) && _.Room.Status.Equals(RoomStatusValueObject.Available)
+                    var isValid = !await _repository.AnyAsync(_ => 
+                       _.RoomId.Equals(command.RoomId) && _.Room.IsActive
                     && _.CheckIn.Date <= command.CheckIn.Date && _.CheckOut.Date >= command.CheckIn.Date
                     || _.CheckIn.Date <= command.CheckOut.Date && _.CheckOut.Date >= command.CheckIn.Date
                     );
 
-                    if (isValidPeriod)
+                    if (isValid)
                     {
                         await _repository.CreateAsync(booking);
+
+                        var newBooking = await _repository.GetByIdAsync(booking.Id);
 
                         return (true, _mapper.Map<BookingEntity, Models.Booking>(booking), string.Empty);
                     }
@@ -103,11 +105,13 @@ namespace Hotel.Booking.Core.Services
             return (true, "");
         }
 
-        public async Task<(bool IsSucess, Models.Booking? Booking, string Message)> UpdateBookingAsync(UpdateBookingCommand command)
+        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> UpdateBookingAsync(UpdateBookingCommand command)
         {
             var booking = await _repository.GetByIdAsync(command.BookingId);
             if (booking != null)
             {
+                booking.Update(command.CheckIn, command.CheckOut);
+
                 var isValid = IsValidBooking(booking);
                 if (isValid.IsSucess)
                 {
@@ -119,19 +123,18 @@ namespace Hotel.Booking.Core.Services
 
                     if (isValidPeriod)
                     {
-                        booking.Update(command.CheckIn, command.CheckOut);
-
                         await _repository.UpdateAsync(booking);
 
                         return (true, _mapper.Map<BookingEntity, Models.Booking>(booking), string.Empty);
                     }
                 }
+                return (false, null, isValid.errorMessage);
             }
 
             return (true, null, "Not found");
         }
 
-        public async Task<(bool IsSucess, Models.Booking? Booking, string Message)> CancelAsync(Guid bookingId)
+        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> CancelAsync(Guid bookingId)
         {
             var booking = await _repository.GetByIdAsync(bookingId);
             if (booking != null)
@@ -140,7 +143,7 @@ namespace Hotel.Booking.Core.Services
 
                 await _repository.UpdateAsync(booking);
 
-                return (false, _mapper.Map<BookingEntity, Models.Booking>(booking), "Not found");
+                return (true, _mapper.Map<BookingEntity, Models.Booking>(booking), "Reserva cancelada com sucesso");
             }
 
             return (false, null, "Not found");

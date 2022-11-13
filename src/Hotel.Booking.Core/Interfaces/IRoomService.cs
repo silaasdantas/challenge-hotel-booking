@@ -7,7 +7,7 @@ namespace Hotel.Booking.Core.Interfaces
         Task<(bool IsSucess, string Status, string Message)>
             CheckRoomAvailabilityAsync(Guid roomId, DateTime checkIn, DateTime checkOut);
 
-        Task<(bool IsSucess, IList<Room>? Rooms, string Message)>
+        Task<(bool IsSucess, IList<Room> Rooms, string Message)>
             GetAllRoomsActivesAsync();
     }
 }

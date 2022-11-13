@@ -29,7 +29,6 @@
         public void Cancel()
         {
             Status = BookingStatusValueObject.BookingCanceled;
-            Room.RoomAvailable();
         }
 
         public void Update(DateTime checkIn, DateTime checkOut)

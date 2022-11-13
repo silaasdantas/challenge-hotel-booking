@@ -22,7 +22,7 @@ namespace Hotel.Booking.Core.Services
         }
 
 
-        public async Task<(bool IsSucess, IList<Room>? Rooms, string Message)>
+        public async Task<(bool IsSucess, IList<Room> Rooms, string Message)>
             GetAllRoomsActivesAsync()
         {
             try
@@ -33,12 +33,12 @@ namespace Hotel.Booking.Core.Services
                     var result = _mapper.Map<IList<RoomEntity>, IList<Room>>(rooms);
                     return (true, result, string.Empty);
                 }
-                return (false, null, "Not found");
+                return (false, new List<Room>(), "Not found");
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex.ToString());
-                return (false, null, ex.Message);
+                return (false, new List<Room>(), ex.Message);
             }
         }
 
@@ -57,8 +57,6 @@ namespace Hotel.Booking.Core.Services
                        _.RoomId.Equals(roomId)
                     && _.CheckIn.Date <= checkIn.Date && _.CheckOut.Date >= checkIn.Date
                     || _.CheckIn.Date <= checkOut.Date && _.CheckOut.Date >= checkIn.Date);
-
-            
 
 
                 if (result)
