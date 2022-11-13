@@ -1,45 +1,50 @@
-using Hotel.Booking.Core;
+using Hotel.Booking.Api.Configurations;
+using Hotel.Booking.Core.Entities;
+using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.Models;
 using Hotel.Booking.Infra.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Hotel.Booking.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion(ConstantsConfiguration.API_VERSION_1)]
+    [Route(ConstantsConfiguration.ROUTE_DEFAULT_CONTROLLER)]
     public class BookingController : ControllerBase
     {
+        private readonly IBookingService _service;
         private readonly ILogger<BookingController> _logger;
         public readonly BookingContext _dbContext;
 
-        public BookingController(BookingContext dbContext, ILogger<BookingController> logger)
+        public BookingController(IBookingService service, BookingContext dbContext, ILogger<BookingController> logger)
         {
+            _service = service;
             _logger = logger;
             _dbContext = dbContext;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllBookingAsync()
+        public async Task<IActionResult> GetAllAsync()
         {
             try
             {
-                var booking = await _dbContext.Bookings.AsNoTracking().Where(_=>_.BookingStatus.Equals(BookingStatusValueObject.RoomBooked)).ToListAsync();
-                if (booking != null)
+                var result = await _service.GetAllBookingAsync();
+                if (result.IsSucess)
                 {
                     return Ok(new
                     {
                         data = new
                         {
-                            booking
+                            result.Bookings
                         }
                     });
                 }
 
                 return NotFound(new
                 {
-                    data = new { },
-
+                    data = new { }
                 });
             }
             catch (Exception ex)
@@ -53,123 +58,91 @@ namespace Hotel.Booking.Api.Controllers
         }
 
         [HttpGet("{bookingId}")]
-        public async Task<IActionResult> GetBookingAsync(Guid bookingId)
+        public async Task<IActionResult> GetByIdAsync(Guid bookingId)
         {
             try
             {
-                var booking = await _dbContext.Bookings.AsNoTracking().FirstOrDefaultAsync(_ => _.Id.Equals(bookingId));
-                if (booking != null)
+                var result = await _service.GetBookingByIdAsync(bookingId);
+                if (result.IsSucess)
                 {
                     return Ok(new
                     {
                         data = new
                         {
-                            booking
+                            result.Booking
                         }
                     });
                 }
 
                 return NotFound(new
                 {
-                    data = new { },
-                    error = $"Not Found - Booking {bookingId}"
+                    data = result.Booking,
+                    message = result.Message
                 });
             }
             catch (Exception ex)
             {
                 return BadRequest(new
                 {
-                    data = new { },
                     error = ex.Message
                 });
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> BookingAsync(CreateBookingCommand command)
-        {
-            var roomExists = await _dbContext.Rooms.AsNoTracking().AnyAsync(_ => _.Id.Equals(command.RoomId));
-            if (!roomExists)
-            {
-                return NotFound(new
-                {
-                    data = new { },
-                    error = $"Room {command.RoomId} Not Found"
-                });
-            }
-
-
-            var booking = new BookingEntity(command.CheckIn, command.CheckOut, command.RoomId);
-
-            var resultValid = booking.IsValidBooking(command.CheckIn, command.CheckOut);
-            var result = !await _dbContext.Bookings.Include(_ => _.Room)
-                .AnyAsync(_ => _.RoomId.Equals(command.RoomId)
-                && _.CheckIn.Date <= command.CheckIn.Date && _.CheckOut.Date >= command.CheckIn.Date
-                || _.CheckIn.Date <= command.CheckOut.Date && _.CheckOut.Date >= command.CheckIn.Date
-                );
-
-            if (resultValid.IsSucess && result)
-            {
-                _dbContext.Bookings.Add(booking);
-                await _dbContext.SaveChangesAsync();
-
-                var newBooking = await _dbContext.Bookings.Include(_ => _.Room).FirstOrDefaultAsync(_ => _.Id.Equals(booking.Id));
-
-                return Ok(new
-                {
-                    data = new
-                    {
-                        booking = newBooking
-                    }
-                });
-            }
-
-            return BadRequest(new
-            {
-                data = new { },
-                error = resultValid.errorMessage
-            });
-
-        }
-
-        [HttpPut("update")]
-        public async Task<IActionResult> CancelBookingAsync(UpdateBookingCommand command)
+        public async Task<IActionResult> BookRoomAsync(CreateBookingCommand command)
         {
             try
             {
-                var booking = await _dbContext.Bookings.AsNoTracking().FirstOrDefaultAsync(_ => _.Id.Equals(command.BookingId));
-                if (booking != null)
+                var result = await _service.BookRoomAsync(command);
+
+                if (result.IsSucess)
                 {
-                    var result = booking.Update(command.CheckIn, command.CheckOut);
-                    if (result.IsSucess)
+                    return Ok(new
                     {
-                        var entity = _dbContext.Bookings.Attach(booking);
-                        entity.State = EntityState.Modified;
-                        await _dbContext.SaveChangesAsync();
-
-                        return Ok(new
+                        data = new
                         {
-                            data = new
-                            {
-                                booking
-                            }
-                        });
-                    }
-                    else
+                            result.Booking
+                        }
+                    });
+                }
+                return NotFound(new
+                {
+                    data = new { },
+                    message = result.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    errors = ex.Message
+                });
+            }
+        }
+
+        [HttpPut("update")]
+        public async Task<IActionResult> UpdateAsync(UpdateBookingCommand command)
+        {
+            try
+            {
+                var result = await _service.UpdateBookingAsync(command);
+
+                if (result.IsSucess)
+                {
+                    return Ok(new
                     {
-                        return BadRequest(new
+                        data = new
                         {
-                            data = new { },
-                            error = result.errorMessage
-                        });
-                    }
-
+                            result.Booking
+                        }
+                    });
                 }
 
                 return NotFound(new
                 {
                     data = new { },
-                    error = $"Booking {command.BookingId} Not Found"
+                    error = result.Message
                 });
             }
             catch (Exception ex)
@@ -182,32 +155,22 @@ namespace Hotel.Booking.Api.Controllers
             }
         }
 
-        [HttpPut("cancel")]
-        public async Task<IActionResult> CancelBookingAsync(Guid bookingId)
+        [HttpPut("cancel/{bookingId}")]
+        public async Task<IActionResult> CancelAsync(Guid bookingId)
         {
             try
             {
-                var booking = await _dbContext.Bookings.AsNoTracking().FirstOrDefaultAsync(_ => _.Id.Equals(bookingId));
-                if (booking != null)
+                var result = await _service.CancelAsync(bookingId);
+                if (result.IsSucess)
                 {
-                    booking.Cancel();
-                    var entity = _dbContext.Bookings.Attach(booking);
-                    entity.State = EntityState.Modified;
-                    await _dbContext.SaveChangesAsync();
-
                     return Ok(new
                     {
-                        data = new
-                        {
-                            booking
-                        }
+                        message = "Reserva cancelada com sucesso"
                     });
                 }
-
                 return NotFound(new
                 {
-                    data = new { },
-                    error = $"Not Found - Booking {bookingId}"
+                    message = result.Message
                 });
             }
             catch (Exception ex)

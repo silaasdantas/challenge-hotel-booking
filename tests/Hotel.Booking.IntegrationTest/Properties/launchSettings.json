@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Hotel.Booking.IntegrationTest": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:49751;http://localhost:49752"
+    }
+  }
+}

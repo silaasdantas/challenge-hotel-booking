@@ -1,31 +1,30 @@
-using Hotel.Booking.Core.Models;
-using Hotel.Booking.Infra.Data;
+using Hotel.Booking.Api.Configurations;
+using Hotel.Booking.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hotel.Booking.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion(ConstantsConfiguration.API_VERSION_1)]
+    [Route(ConstantsConfiguration.ROUTE_DEFAULT_CONTROLLER)]
     public class RoomController : ControllerBase
     {
         private readonly ILogger<RoomController> _logger;
-        public readonly BookingContext _dbContext;
+        private readonly IRoomService _service;
 
-        public RoomController(BookingContext dbContext, ILogger<RoomController> logger)
+        public RoomController(IRoomService service, ILogger<RoomController> logger)
         {
+            _service = service;
             _logger = logger;
-            _dbContext = dbContext;
-            SeedData();
         }
 
 
         [HttpGet]
         public async Task<IActionResult> GetAsync()
         {
-            var result = await _dbContext.Rooms.AsNoTracking().Where(_ => _.IsActive).ToListAsync();
-            if (result != null)
-                return Ok(result);
+            var result = await _service.GetAllRoomsActivesAsync();
+            if (result.IsSucess)
+                return Ok(result.Rooms);
 
             return NotFound();
         }
@@ -34,25 +33,19 @@ namespace Hotel.Booking.Api.Controllers
         [HttpGet("check-availability")]
         public async Task<IActionResult> CheckRoomAvailabilityAsync([FromQuery] Guid roomId, DateTime checkIn, DateTime checkOut)
         {
-            var result = !await _dbContext.Bookings.Include(_ => _.Room)
-                .AnyAsync(_ => _.RoomId.Equals(roomId)
-                && _.CheckIn.Date <= checkIn.Date && _.CheckOut.Date >= checkIn.Date
-                || _.CheckIn.Date <= checkOut.Date && _.CheckOut.Date >= checkIn.Date
-                );
+            var result = await _service.CheckRoomAvailabilityAsync(roomId, checkIn, checkOut);
+            if (result.IsSucess)
+                return Ok(new
+                {
+                    result.Status,
+                    result.Message
+                });
 
-            return Ok(new { availability = result });
-        }    
-
-        private void SeedData()
-        {
-            if (!_dbContext.Rooms.Any())
+            return NotFound(new
             {
-                var roomSeed = new RoomEntity("Premium Suite, Lagoon View", true);
-                _dbContext.Rooms.Add(roomSeed);
-                _dbContext.Bookings.Add(new BookingEntity(DateTime.Now.AddDays(1), DateTime.Now.AddDays(3), roomSeed.Id));
-                _dbContext.Bookings.Add(new BookingEntity(DateTime.Now.AddDays(10), DateTime.Now.AddDays(12), roomSeed.Id));
-                _dbContext.SaveChanges();
-            }
+                result.Status,
+                result.Message
+            });
         }
     }
 }

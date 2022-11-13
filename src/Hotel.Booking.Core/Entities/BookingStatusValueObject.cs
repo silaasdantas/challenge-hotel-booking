@@ -1,4 +1,4 @@
-﻿namespace Hotel.Booking.Core
+﻿namespace Hotel.Booking.Core.Entities
 {
     public enum BookingStatusValueObject
     {
