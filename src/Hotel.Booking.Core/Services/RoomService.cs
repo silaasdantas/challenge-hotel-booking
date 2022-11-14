@@ -10,28 +10,28 @@ namespace Hotel.Booking.Core.Services
     public class RoomService : IRoomService
     {
         private readonly ILogger<RoomService> _logger;
-        public readonly IRoomRespository _roomRespository;
+        public readonly IRoomRespository _respository;
         private readonly IMapper _mapper;
 
-        public RoomService(IRoomRespository roomRespository,
+        public RoomService(IRoomRespository respository,
             ILogger<RoomService> logger,
             IMapper mapper)
         {
-            _roomRespository = roomRespository;
+            _respository = respository;
             _logger = logger;
             _mapper = mapper;
         }
 
 
-        public async Task<(bool IsSucess, IList<RoomResponse> Rooms, string Message)>
+        public async Task<(bool IsSucess, List<RoomResponse> Rooms, string Message)>
             GetAllRoomsActivesAsync()
         {
             try
             {
-                var rooms = await _roomRespository.GetAllAsync();
+                var rooms = await _respository.GetAllAsync();
                 if (rooms != null && rooms.Any())
                 {
-                    var result = _mapper.Map<IList<RoomEntity>, IList<RoomResponse>>(rooms);
+                    var result = _mapper.Map<List<RoomEntity>, List<RoomResponse>>(rooms);
                     return (true, result, string.Empty);
                 }
                 return (false, new List<RoomResponse>(), "Not found");
@@ -48,13 +48,13 @@ namespace Hotel.Booking.Core.Services
         {
             try
             {
-                var room = await _roomRespository.GetByIdAsync(request.RoomId);
+                var room = await _respository.GetByIdAsync(request.RoomId);
                 if (room == null)
                     return (false, string.Empty, "Room not found");
 
                 ValidDateCheckInAndCheckout(request.CheckIn, request.CheckOut);
 
-                var result = await _roomRespository.CheckRoomAvailabilityAsync(request.RoomId, request.CheckIn, request.CheckOut);
+                var result = await _respository.CheckRoomAvailabilityAsync(request.RoomId, request.CheckIn, request.CheckOut);
 
                 if (result.Equals(RoomStatusValueObject.Available))
                     return (true, RoomStatusValueObject.Available.ToString(), "Room available to book.");

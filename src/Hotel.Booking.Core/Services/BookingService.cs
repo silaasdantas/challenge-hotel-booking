@@ -9,19 +9,19 @@ namespace Hotel.Booking.Core.Services
 {
     public class BookingService : IBookingService
     {
-        public readonly IBookingRespository _bookingRespository;
+        public readonly IBookingRespository _respository;
         private readonly IMapper _mapper;
 
-        public BookingService(IBookingRespository bookingRespository, ILogger<RoomService> logger, IMapper mapper)
+        public BookingService(IBookingRespository respository, ILogger<RoomService> logger, IMapper mapper)
         {
-            _bookingRespository = bookingRespository;
+            _respository = respository;
             _mapper = mapper;
         }
         public async Task<(bool IsSucess, List<BookingResponse> Bookings, string Message)> GetAllBookingAsync()
         {
             try
             {
-                var bookings = await _bookingRespository.GetAllAsync();
+                var bookings = await _respository.GetAllAsync();
                 if (bookings != null && bookings.Any())
                     return (true, _mapper.Map<IEnumerable<BookingEntity>, List<BookingResponse>>(bookings), string.Empty);
 
@@ -33,15 +33,15 @@ namespace Hotel.Booking.Core.Services
             }
         }
 
-        public async Task<(bool IsSucess, BookingResponse Booking, string Message)> GetBookingByIdAsync(Guid bookingId)
+        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> GetBookingByIdAsync(Guid bookingId)
         {
             try
             {
-                var booking = await _bookingRespository.GetByIdAsync(bookingId);
+                var booking = await _respository.GetByIdAsync(bookingId);
                 if (booking != null)
                     return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
 
-                return (false, null, "Not found");
+                return (false, null, Message: "Not found");
             }
             catch (Exception)
             {
@@ -49,29 +49,29 @@ namespace Hotel.Booking.Core.Services
             }
         }
 
-        public async Task<(bool IsSucess, BookingResponse Booking, string Message)> BookRoomAsync(BookingRequest request)
+        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> BookRoomAsync(BookingRequest request)
         {
             try
             {
-                var exists = await _bookingRespository.AnyAsync(_ => _.RoomId.Equals(request.RoomId));
+                var exists = await _respository.AnyAsync(_ => _.RoomId.Equals(request.RoomId));
                 if (exists)
                 {
                     ValidDateCheckInAndCheckout(request.CheckIn, request.CheckOut);
 
-                    var result = await _bookingRespository.CheckRoomAvailabilityAsync(request.RoomId, request.CheckIn, request.CheckOut);
+                    var result = await _respository.CheckRoomAvailabilityAsync(request.RoomId, request.CheckIn, request.CheckOut);
                     if (result.Equals(RoomStatusValueObject.Available))
                     {
                         var booking = new BookingEntity(request.CheckIn, request.CheckOut, request.RoomId);
-                        await _bookingRespository.CreateAsync(booking);
+                        await _respository.CreateAsync(booking);
 
                         return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
                     }
 
                     return (false, null, "Room not available for booking on this date.");
                 }
-                return (false, null, "Not found");
+                return (false, null, "Room not found");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }
@@ -79,20 +79,20 @@ namespace Hotel.Booking.Core.Services
 
 
 
-        public async Task<(bool IsSucess, BookingResponse Booking, string Message)> UpdateBookingAsync(UpdateBookingRequest request)
+        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> UpdateBookingAsync(UpdateBookingRequest request)
         {
             try
             {
-                var booking = await _bookingRespository.GetByIdAsync(request.BookingId);
+                var booking = await _respository.GetByIdAsync(request.BookingId);
                 if (booking != null)
                 {
                     ValidDateCheckInAndCheckout(request.CheckIn, request.CheckOut);
 
-                    var result = await _bookingRespository.CheckRoomAvailabilityAsync(booking.RoomId, request.CheckIn, request.CheckOut);
+                    var result = await _respository.CheckRoomAvailabilityAsync(booking.Id, request.CheckIn, request.CheckOut);
                     if (result.Equals(RoomStatusValueObject.Available))
                     {
                         booking.Update(request.CheckIn, request.CheckOut);
-                        await _bookingRespository.UpdateAsync(booking);
+                        await _respository.UpdateAsync(booking);
 
                         return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
                     }
@@ -107,15 +107,15 @@ namespace Hotel.Booking.Core.Services
             }
         }
 
-        public async Task<(bool IsSucess, BookingResponse Booking, string Message)> CancelAsync(Guid bookingId)
+        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> CancelAsync(Guid bookingId)
         {
             try
             {
-                var booking = await _bookingRespository.GetByIdAsync(bookingId);
+                var booking = await _respository.GetByIdAsync(bookingId);
                 if (booking != null)
                 {
                     booking.Cancel();
-                    await _bookingRespository.UpdateAsync(booking);
+                    await _respository.UpdateAsync(booking);
 
                     return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), "Booking successfully canceled");
                 }

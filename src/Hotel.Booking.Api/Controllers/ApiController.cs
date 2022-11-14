@@ -11,6 +11,9 @@ namespace Hotel.Booking.Api.Controllers
     {
         private readonly ICollection<string> _errors = new List<string>();
 
+        protected void AddError(string erro) =>
+            _errors.Add(erro);
+
         protected IActionResult ResponseOk(object result) =>
             Response(HttpStatusCode.OK, result);
 
@@ -23,12 +26,6 @@ namespace Hotel.Booking.Api.Controllers
         protected IActionResult ResponseCreated(object data) =>
             Response(HttpStatusCode.Created, data);
 
-        protected IActionResult ResponseNoContent() =>
-            Response(HttpStatusCode.NoContent);
-
-        protected IActionResult ResponseNotModified() =>
-            Response(HttpStatusCode.NotModified);
-
         protected IActionResult ResponseBadRequest(ModelStateDictionary modelState)
         {
             var errors = modelState.Values.SelectMany(e => e.Errors);
@@ -36,11 +33,6 @@ namespace Hotel.Booking.Api.Controllers
                 AddError(error.ErrorMessage);
 
             return Response(HttpStatusCode.BadRequest, errorMessages: _errors.ToArray());
-        }
-
-        protected void AddError(string erro)
-        {
-            _errors.Add(erro);
         }
 
         protected IActionResult ResponseBadRequest(string errorMessage) =>

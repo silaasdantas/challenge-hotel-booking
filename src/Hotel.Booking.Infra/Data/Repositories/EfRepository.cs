@@ -17,11 +17,8 @@ namespace Hotel.Booking.Infra.Data.Repositories
             _dbSet = _dbContext.Set<T>();
         }
 
-        public async Task<T?> GetByIdAsync<Tid>(Tid id) where Tid : notnull
+        public async Task<T?> GetByIdAsync(Guid id) 
             => await _dbSet.FindAsync(id);
-
-        public async Task<IEnumerable<T>> GetAllAsync()
-            => await _dbSet.ToListAsync();
 
         public async Task<IList<T>> GetAsync(Expression<Func<T, bool>> predicate)
         {
@@ -49,9 +46,6 @@ namespace Hotel.Booking.Infra.Data.Repositories
 
         public Task<int> UpdateAsync(T entity)
         {
-            //var entity = _dbContext.Bookings.Attach(booking);
-            //entity.State = EntityState.Modified;
-            //_dbSet.Attach(entity);
             _dbSet.Entry(entity).State = EntityState.Modified;
             _dbSet.Update(entity);
             return _dbContext.SaveChangesAsync();

@@ -10,9 +10,6 @@ namespace Hotel.Booking.Infra.Data.Repositories
         public RoomRespository(HotelDbContext dbContext)
             : base(dbContext) { }
 
-        public async Task<RoomEntity> GetByIdAsync(Guid id) =>
-            await _dbSet.FindAsync(id);
-
         public async Task<List<RoomEntity>> GetAllAsync() => 
             await _dbSet.AsNoTracking().Where(_ => _.IsActive).ToListAsync();
 
