@@ -7,7 +7,6 @@ Esse projeto faz parte de um desafio de desenvolvimento backend.
 - **C#**
 - **Asp.Net Core 6**
 - **Swagger**
-- **xUnit** 
 - **Entity Framework In Memory** 
 ### :point_right: Processo de Desenvolvimento
 
