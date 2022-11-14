@@ -1,152 +1,141 @@
 ﻿using AutoMapper;
+using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
+using Hotel.Booking.Core.Handlers;
 using Hotel.Booking.Core.Interfaces;
-using Hotel.Booking.Core.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Hotel.Booking.Core.Services
 {
     public class BookingService : IBookingService
     {
-        private readonly ILogger<RoomService> _logger;
-        public readonly IEfRepository<BookingEntity> _repository;
-        public readonly IEfRepository<RoomEntity> _repositoryRoom;
+        public readonly IBookingRespository _bookingRespository;
         private readonly IMapper _mapper;
 
-        public BookingService(IEfRepository<BookingEntity> repository, IEfRepository<RoomEntity> repositoryRoom, ILogger<RoomService> logger, IMapper mapper)
+        public BookingService(IBookingRespository bookingRespository, ILogger<RoomService> logger, IMapper mapper)
         {
-            _repository = repository;
-            _repositoryRoom = repositoryRoom;
-            _logger = logger;
+            _bookingRespository = bookingRespository;
             _mapper = mapper;
         }
-        public async Task<(bool IsSucess, IList<Models.Booking> Bookings, string Message)> GetAllBookingAsync()
+        public async Task<(bool IsSucess, List<BookingResponse> Bookings, string Message)> GetAllBookingAsync()
         {
             try
             {
-                var bookings = await _repository.GetAllAsync();
+                var bookings = await _bookingRespository.GetAllAsync();
                 if (bookings != null && bookings.Any())
-                    return (true, _mapper.Map<IEnumerable<BookingEntity>, IList<Models.Booking>>(bookings), string.Empty);
+                    return (true, _mapper.Map<IEnumerable<BookingEntity>, List<BookingResponse>>(bookings), string.Empty);
 
-                return (false, new List<Models.Booking>(), "Not found");
+                return (false, new List<BookingResponse>(), "Not found");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger?.LogError(ex.ToString());
-                return (false, new List<Models.Booking>(), ex.Message);
+                throw;
             }
         }
 
-        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> GetBookingByIdAsync(Guid bookingId)
+        public async Task<(bool IsSucess, BookingResponse Booking, string Message)> GetBookingByIdAsync(Guid bookingId)
         {
             try
             {
-                var booking = await _repository.GetByIdAsync(bookingId);
+                var booking = await _bookingRespository.GetByIdAsync(bookingId);
                 if (booking != null)
-                    return (true, _mapper.Map<BookingEntity, Models.Booking>(booking), string.Empty);
+                    return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
 
+                return (false, null, "Not found");
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public async Task<(bool IsSucess, BookingResponse Booking, string Message)> BookRoomAsync(BookingRequest request)
+        {
+            try
+            {
+                var exists = await _bookingRespository.AnyAsync(_ => _.RoomId.Equals(request.RoomId));
+                if (exists)
+                {
+                    ValidDateCheckInAndCheckout(request.CheckIn, request.CheckOut);
+
+                    var result = await _bookingRespository.CheckRoomAvailabilityAsync(request.RoomId, request.CheckIn, request.CheckOut);
+                    if (result.Equals(RoomStatusValueObject.Available))
+                    {
+                        var booking = new BookingEntity(request.CheckIn, request.CheckOut, request.RoomId);
+                        await _bookingRespository.CreateAsync(booking);
+
+                        return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
+                    }
+
+                    return (false, null, "Room not available for booking on this date.");
+                }
                 return (false, null, "Not found");
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex.ToString());
-                return (false, null, ex.Message);
+                throw;
             }
         }
 
-        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> BookRoomAsync(CreateBooking command)
-        {
-            var roomExist = !await _repository.AnyAsync(_ => _.Id.Equals(command.RoomId));
-            if (roomExist)
-            {
-                var booking = new BookingEntity(command.CheckIn, command.CheckOut, command.RoomId);
 
-                var result = IsValidBooking(booking);
-                if (result.IsSucess)
+
+        public async Task<(bool IsSucess, BookingResponse Booking, string Message)> UpdateBookingAsync(UpdateBookingRequest request)
+        {
+            try
+            {
+                var booking = await _bookingRespository.GetByIdAsync(request.BookingId);
+                if (booking != null)
                 {
-                    var isValid = !await _repository.AnyAsync(_ => 
-                       _.RoomId.Equals(command.RoomId) && _.Room.IsActive
-                    && _.CheckIn.Date <= command.CheckIn.Date && _.CheckOut.Date >= command.CheckIn.Date
-                    || _.CheckIn.Date <= command.CheckOut.Date && _.CheckOut.Date >= command.CheckIn.Date
-                    );
+                    ValidDateCheckInAndCheckout(request.CheckIn, request.CheckOut);
 
-                    if (isValid)
+                    var result = await _bookingRespository.CheckRoomAvailabilityAsync(booking.RoomId, request.CheckIn, request.CheckOut);
+                    if (result.Equals(RoomStatusValueObject.Available))
                     {
-                        await _repository.CreateAsync(booking);
+                        booking.Update(request.CheckIn, request.CheckOut);
+                        await _bookingRespository.UpdateAsync(booking);
 
-                        var newBooking = await _repository.GetByIdAsync(booking.Id);
-
-                        return (true, _mapper.Map<BookingEntity, Models.Booking>(booking), string.Empty);
+                        return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
                     }
-
+                    return (false, null, "Room not available for booking on this date.");
                 }
-                return (false, null, result.errorMessage);
+
+                return (false, null, "Not found");
             }
-
-            return (false, null, "Not found");
-        }
-
-        public (bool IsSucess, string errorMessage) IsValidBooking(BookingEntity booking)
-        {
-            var today = DateTime.Now;
-
-            if (booking.CheckIn.Date <= booking.CreatedAt.Date)
-                return (false, "All reservations must start at least the next day of booking.");
-
-            if (booking.CheckOut.Date < booking.CheckIn.Date)
-                return (false, "The end date must be greater than the start date.");
-
-            if ((today.AddDays(booking.AdvanceBookingDaysLimit).Date - booking.CheckIn.Date).Days <= -1)
-                return (false, $"Rooms can`t be reserved more than {booking.AdvanceBookingDaysLimit} days in advance.");
-
-            if ((booking.CheckOut.Date - booking.CheckIn.Date).Days > booking.StayLimit)
-                return (false, $"Rooms can`t be reserved for more than {booking.StayLimit} days.");
-
-            return (true, "");
-        }
-
-        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> UpdateBookingAsync(UpdateBooking command)
-        {
-            var booking = await _repository.GetByIdAsync(command.BookingId);
-            if (booking != null)
+            catch (Exception)
             {
-                booking.Update(command.CheckIn, command.CheckOut);
+                throw;
+            }
+        }
 
-                var isValid = IsValidBooking(booking);
-                if (isValid.IsSucess)
+        public async Task<(bool IsSucess, BookingResponse Booking, string Message)> CancelAsync(Guid bookingId)
+        {
+            try
+            {
+                var booking = await _bookingRespository.GetByIdAsync(bookingId);
+                if (booking != null)
                 {
-                    var isValidPeriod = !await _repository.AnyAsync(_ =>
-                    _.RoomId.Equals(booking.Id)
-                    && _.CheckIn.Date <= command.CheckIn.Date && _.CheckOut.Date >= command.CheckIn.Date
-                    || _.CheckIn.Date <= command.CheckOut.Date && _.CheckOut.Date >= command.CheckIn.Date
-                    );
+                    booking.Cancel();
+                    await _bookingRespository.UpdateAsync(booking);
 
-                    if (isValidPeriod)
-                    {
-                        await _repository.UpdateAsync(booking);
-
-                        return (true, _mapper.Map<BookingEntity, Models.Booking>(booking), string.Empty);
-                    }
+                    return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), "Booking successfully canceled");
                 }
-                return (false, null, isValid.errorMessage);
-            }
 
-            return (true, null, "Not found");
+                return (false, null, "Not found");
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
-        public async Task<(bool IsSucess, Models.Booking Booking, string Message)> CancelAsync(Guid bookingId)
+        private static void ValidDateCheckInAndCheckout(DateTime checkIn, DateTime checkOut)
         {
-            var booking = await _repository.GetByIdAsync(bookingId);
-            if (booking != null)
-            {
-                booking.Cancel();
+            var handler = new NextDayOfBookingValidationHandler();
+            handler.SetNext(new DateGreaterThanStartValidationHandler())
+                .SetNext(new AdvanceBookingDaysLimitValidationHandler())
+                .SetNext(new StayLimitValidationHandler());
 
-                await _repository.UpdateAsync(booking);
-
-                return (true, _mapper.Map<BookingEntity, Models.Booking>(booking), "Reserva cancelada com sucesso");
-            }
-
-            return (false, null, "Not found");
+            handler.Handle(checkIn, checkOut);
         }
     }
 }

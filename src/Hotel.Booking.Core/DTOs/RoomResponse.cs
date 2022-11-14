@@ -1,6 +1,6 @@
-﻿namespace Hotel.Booking.Core.Models
+﻿namespace Hotel.Booking.Core.DTOs
 {
-    public class Room
+    public class RoomResponse
     {
         public Guid Id { get; set; }
         public string? Name { get; set; }

@@ -1,5 +1,6 @@
 using Hotel.Booking.Api.Configurations;
 using Hotel.Booking.Core.Interfaces;
+using Hotel.Booking.Core.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hotel.Booking.Api.Controllers
@@ -19,41 +20,49 @@ namespace Hotel.Booking.Api.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> GetAsync()
-        {
-            var result = await _service.GetAllRoomsActivesAsync();
-            if (result.IsSucess)
-                return ResponseOk(result.Rooms);
-
-            return NotFound();
-        }
-
-
-        [HttpGet("check-availability")]
-        public async Task<IActionResult> CheckRoomAvailabilityAsync([FromQuery] Guid roomId, DateTime checkIn, DateTime checkOut)
+        public async Task<IActionResult> GetAllAsync()
         {
             try
             {
-                var result = await _service.CheckRoomAvailabilityAsync(roomId, checkIn, checkOut);
+                var result = await _service.GetAllRoomsActivesAsync();
                 if (result.IsSucess)
-                    return Ok(new
-                    {
-                        result.Status,
-                        result.Message
-                    });
+                    return ResponseOk(result.Rooms);
 
-                return NotFound(new
-                {
-                    result.Status,
-                    result.Message
-                });
+                return ResponseNotFound();
             }
             catch (Exception ex)
             {
-                return BadRequest(new
+                _logger?.LogError(ex.ToString());
+                return ResponseBadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpPost("check-availability")]
+        public async Task<IActionResult> CheckRoomAvailabilityAsync([FromBody] BookingRequest request)
+        {
+            try
+            {
+                if (ModelState.IsValid)
                 {
-                    erros = ex.Message
-                });
+                    var result = await _service.CheckRoomAvailabilityAsync(request);
+                    if (result.IsSucess)
+                    {
+                        return ResponseOk(new
+                        {
+                            result.Status,
+                            result.Message
+                        });
+                    }
+
+                    return ResponseNotFound(result.Message);
+                }
+                return ResponseBadRequest(ModelState);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex.ToString());
+                return ResponseBadRequest(ex.Message);
             }
         }
     }

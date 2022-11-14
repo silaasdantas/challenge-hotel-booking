@@ -1,5 +1,5 @@
 ﻿using Hotel.Booking.Core.Interfaces;
-using Hotel.Booking.Core.Models;
+using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Infra.Data.Db;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;

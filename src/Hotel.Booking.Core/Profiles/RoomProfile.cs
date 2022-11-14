@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Hotel.Booking.Core.Entities;
-using Hotel.Booking.Core.Models;
+using Hotel.Booking.Core.DTOs;
 
 namespace Hotel.Booking.Core.Profiles
 {
@@ -8,8 +8,8 @@ namespace Hotel.Booking.Core.Profiles
     {
         public RoomProfile()
         {
-            CreateMap<RoomEntity, Room>();
-            CreateMap<Room, RoomEntity>();
+            CreateMap<RoomEntity, RoomResponse>();
+            CreateMap<RoomResponse, RoomEntity>();
         }
     }
 }

@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Hotel.Booking.Core.Models
+namespace Hotel.Booking.Core.DTOs
 {
-    public class UpdateBooking
+    public class BookingRequest
     {
         [Required]
-        public Guid BookingId { get; set; }
+        public Guid RoomId { get; set; }
         [Required]
         public DateTime CheckIn { get; set; }
         [Required]

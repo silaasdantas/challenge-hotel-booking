@@ -10,14 +10,19 @@ namespace Hotel.Booking.Infra.Data.Repositories
         public RoomRespository(HotelDbContext dbContext)
             : base(dbContext) { }
 
+        public async Task<RoomEntity> GetByIdAsync(Guid id) =>
+            await _dbSet.FindAsync(id);
+
+        public async Task<List<RoomEntity>> GetAllAsync() => 
+            await _dbSet.AsNoTracking().Where(_ => _.IsActive).ToListAsync();
+
         public async Task<RoomStatusValueObject> CheckRoomAvailabilityAsync(Guid roomId, DateTime checkIn, DateTime checkOut)
         {
             var result = await _dbSet.AsQueryable().AsNoTracking()
                                .Include(_ => _.Bookings)
-                               .Where(_ => _.Id.Equals(roomId) && _.IsActive && _.Bookings.Any(booking =>
+                               .AnyAsync(_ => _.Id.Equals(roomId) && _.IsActive && _.Bookings.Any(booking =>
                                (booking.CheckIn.Date <= checkIn.Date && booking.CheckOut.Date >= checkIn.Date) ||
-                               (booking.CheckIn.Date <= checkOut.Date && booking.CheckOut.Date >= checkIn.Date)))
-                               .AnyAsync();
+                               (booking.CheckIn.Date <= checkOut.Date && booking.CheckOut.Date >= checkIn.Date)));
 
             if (result)
                 return RoomStatusValueObject.Booked;

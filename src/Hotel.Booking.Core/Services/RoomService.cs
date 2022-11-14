@@ -1,7 +1,8 @@
 ﻿using AutoMapper;
 using Hotel.Booking.Core.Entities;
+using Hotel.Booking.Core.Handlers;
 using Hotel.Booking.Core.Interfaces;
-using Hotel.Booking.Core.Models;
+using Hotel.Booking.Core.DTOs;
 using Microsoft.Extensions.Logging;
 
 namespace Hotel.Booking.Core.Services
@@ -9,55 +10,51 @@ namespace Hotel.Booking.Core.Services
     public class RoomService : IRoomService
     {
         private readonly ILogger<RoomService> _logger;
-        public readonly IEfRepository<RoomEntity> _repository;
-        public readonly IEfRepository<BookingEntity> _repositoryBooking;
         public readonly IRoomRespository _roomRespository;
         private readonly IMapper _mapper;
 
-        public RoomService(IEfRepository<RoomEntity> repository, 
-            IEfRepository<BookingEntity> repositoryBooking,
-            IRoomRespository roomRespository,
-            ILogger<RoomService> logger, 
+        public RoomService(IRoomRespository roomRespository,
+            ILogger<RoomService> logger,
             IMapper mapper)
         {
-            _repository = repository;
             _roomRespository = roomRespository;
-            _repositoryBooking = repositoryBooking;
             _logger = logger;
             _mapper = mapper;
         }
 
 
-        public async Task<(bool IsSucess, IList<Room> Rooms, string Message)>
+        public async Task<(bool IsSucess, IList<RoomResponse> Rooms, string Message)>
             GetAllRoomsActivesAsync()
         {
             try
             {
-                var rooms = await _repository.GetAsync(_ => _.IsActive);
+                var rooms = await _roomRespository.GetAllAsync();
                 if (rooms != null && rooms.Any())
                 {
-                    var result = _mapper.Map<IList<RoomEntity>, IList<Room>>(rooms);
+                    var result = _mapper.Map<IList<RoomEntity>, IList<RoomResponse>>(rooms);
                     return (true, result, string.Empty);
                 }
-                return (false, new List<Room>(), "Not found");
+                return (false, new List<RoomResponse>(), "Not found");
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex.ToString());
-                return (false, new List<Room>(), ex.Message);
+                throw;
             }
         }
 
         public async Task<(bool IsSucess, string Status, string Message)>
-            CheckRoomAvailabilityAsync(Guid roomId, DateTime checkIn, DateTime checkOut)
+            CheckRoomAvailabilityAsync(BookingRequest request)
         {
             try
             {
-                var room = await _repository.GetByIdAsync(roomId);
+                var room = await _roomRespository.GetByIdAsync(request.RoomId);
                 if (room == null)
                     return (false, string.Empty, "Room not found");
 
-                var result = await _roomRespository.CheckRoomAvailabilityAsync(roomId, checkIn, checkOut);
+                ValidDateCheckInAndCheckout(request.CheckIn, request.CheckOut);
+
+                var result = await _roomRespository.CheckRoomAvailabilityAsync(request.RoomId, request.CheckIn, request.CheckOut);
 
                 if (result.Equals(RoomStatusValueObject.Available))
                     return (true, RoomStatusValueObject.Available.ToString(), "Room available to book.");
@@ -67,8 +64,18 @@ namespace Hotel.Booking.Core.Services
             catch (Exception ex)
             {
                 _logger?.LogError(ex.ToString());
-                return (false, "Unable to load room data.", ex.Message);
+                throw;
             }
+        }
+
+        private static void ValidDateCheckInAndCheckout(DateTime checkIn, DateTime checkOut)
+        {
+            var handler = new NextDayOfBookingValidationHandler();
+            handler.SetNext(new DateGreaterThanStartValidationHandler())
+                .SetNext(new AdvanceBookingDaysLimitValidationHandler())
+                .SetNext(new StayLimitValidationHandler());
+
+            handler.Handle(checkIn, checkOut);
         }
     }
 }

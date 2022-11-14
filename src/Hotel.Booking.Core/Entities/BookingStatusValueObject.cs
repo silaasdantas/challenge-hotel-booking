@@ -2,7 +2,7 @@
 {
     public enum BookingStatusValueObject
     {
-        RoomBooked = 1,
+        ActiveBooking = 1,
         BookingCanceled = 2
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Hotel.Booking.Api.Extensions;
 using Hotel.Booking.Api.Shrared;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Net;
 
 namespace Hotel.Booking.Api.Controllers
@@ -8,6 +9,8 @@ namespace Hotel.Booking.Api.Controllers
     [ApiController]
     public abstract class ApiController : ControllerBase
     {
+        private readonly ICollection<string> _errors = new List<string>();
+
         protected IActionResult ResponseOk(object result) =>
             Response(HttpStatusCode.OK, result);
 
@@ -26,32 +29,32 @@ namespace Hotel.Booking.Api.Controllers
         protected IActionResult ResponseNotModified() =>
             Response(HttpStatusCode.NotModified);
 
+        protected IActionResult ResponseBadRequest(ModelStateDictionary modelState)
+        {
+            var errors = modelState.Values.SelectMany(e => e.Errors);
+            foreach (var error in errors)
+                AddError(error.ErrorMessage);
+
+            return Response(HttpStatusCode.BadRequest, errorMessages: _errors.ToArray());
+        }
+
+        protected void AddError(string erro)
+        {
+            _errors.Add(erro);
+        }
+
         protected IActionResult ResponseBadRequest(string errorMessage) =>
             Response(HttpStatusCode.BadRequest, errorMessage: errorMessage);
 
         protected IActionResult ResponseBadRequest() =>
-            Response(HttpStatusCode.BadRequest, errorMessage: "A requisição é inválida");
+            Response(HttpStatusCode.BadRequest, errorMessage: "The request is invalid");
 
         protected IActionResult ResponseNotFound(string errorMessage) =>
             Response(HttpStatusCode.NotFound, errorMessage: errorMessage);
 
         protected IActionResult ResponseNotFound() =>
-            Response(HttpStatusCode.NotFound, errorMessage: "O recurso não foi encontrado");
+            Response(HttpStatusCode.NotFound, errorMessage: "Resource not found");
 
-        protected IActionResult ResponseUnauthorized(string errorMessage) =>
-            Response(HttpStatusCode.Unauthorized, errorMessage: errorMessage);
-
-        protected IActionResult ResponseUnauthorized() =>
-            Response(HttpStatusCode.Unauthorized, errorMessage: "Permissão negada");
-
-        protected IActionResult ResponseInternalServerError() =>
-            Response(HttpStatusCode.InternalServerError);
-
-        protected IActionResult ResponseInternalServerError(string errorMessage) =>
-            Response(HttpStatusCode.InternalServerError, errorMessage: errorMessage);
-
-        protected IActionResult ResponseInternalServerError(Exception exception) =>
-            Response(HttpStatusCode.InternalServerError, errorMessage: exception.Message);
 
         protected new JsonResult Response(HttpStatusCode statusCode, object data, string errorMessage)
         {
@@ -76,6 +79,26 @@ namespace Hotel.Booking.Api.Controllers
             }
             return new JsonResult(result) { StatusCode = (int)result.StatusCode };
         }
+
+        protected new JsonResult ResponseErrorList(HttpStatusCode statusCode, string[] errorMessages)
+        {
+            CustomResult? result = null;
+            if (errorMessages.Length > 0)
+            {
+                var errors = new List<string>();
+
+                foreach (var errorMessage in errorMessages)
+                {
+                    if (!string.IsNullOrWhiteSpace(errorMessage))
+                        errors.Add(errorMessage);
+                }
+                result = new CustomResult(statusCode, false, errors);
+            }
+            return new JsonResult(result) { StatusCode = (int)statusCode };
+        }
+
+        private new JsonResult Response(HttpStatusCode statusCode, string[] errorMessages) =>
+             ResponseErrorList(statusCode, errorMessages);
 
         protected new JsonResult Response(HttpStatusCode statusCode, object result) =>
             Response(statusCode, result, null);

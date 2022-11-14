@@ -7,8 +7,8 @@ namespace Hotel.Booking.Core.Profiles
     {
         public BookingProfile()
         {
-            CreateMap<BookingEntity, Models.Booking>();
-            CreateMap<Models.Booking, BookingEntity>();
+            CreateMap<BookingEntity, DTOs.BookingResponse>();
+            CreateMap<DTOs.BookingResponse, BookingEntity>();
         }
     }
 }

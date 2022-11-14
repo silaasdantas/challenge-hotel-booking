@@ -1,6 +1,6 @@
 using Hotel.Booking.Api.Configurations;
 using Hotel.Booking.Core.Interfaces;
-using Hotel.Booking.Core.Models;
+using Hotel.Booking.Core.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hotel.Booking.Api.Controllers
@@ -56,11 +56,11 @@ namespace Hotel.Booking.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> BookAsync(CreateBooking command)
+        public async Task<IActionResult> BookAsync(BookingRequest request)
         {
             try
             {
-                var result = await _service.BookRoomAsync(command);
+                var result = await _service.BookRoomAsync(request);
                 if (result.IsSucess)
                     return ResponseCreated(result.Booking);
 
@@ -74,11 +74,11 @@ namespace Hotel.Booking.Api.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateAsync(UpdateBooking command)
+        public async Task<IActionResult> UpdateAsync(UpdateBookingRequest request)
         {
             try
             {
-                var result = await _service.UpdateBookingAsync(command);
+                var result = await _service.UpdateBookingAsync(request);
                 if (result.IsSucess)
                     return ResponseOk(result.Booking);
 

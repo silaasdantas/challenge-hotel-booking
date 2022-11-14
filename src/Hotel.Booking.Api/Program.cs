@@ -33,7 +33,9 @@ builder.Services.AddHealthChecks();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IRoomRespository, RoomRespository>();
+builder.Services.AddScoped(typeof(IBookingRespository), typeof(BookingRespository));
 builder.Services.AddScoped(typeof(IEfRepository<>), typeof(EfRepository<>));
+
 
 
 var app = builder.Build();

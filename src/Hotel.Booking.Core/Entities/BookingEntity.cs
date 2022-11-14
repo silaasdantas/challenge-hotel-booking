@@ -5,11 +5,7 @@
         public Guid Id { get; set; }
         public DateTime CheckIn { get; set; }
         public DateTime CheckOut { get; set; }
-        public int Adults { get; set; }
-        public int Children { get; set; }
         public Guid RoomId { get; set; }
-        public int AdvanceBookingDaysLimit { get; set; }
-        public int StayLimit { get; set; }
         public BookingStatusValueObject Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public RoomEntity Room { get; set; }
@@ -20,9 +16,7 @@
             CheckIn = checkIn;
             CheckOut = checkOut;
             RoomId = roomId;
-            StayLimit = 3;
-            AdvanceBookingDaysLimit = 30;
-            Status = BookingStatusValueObject.RoomBooked;
+            Status = BookingStatusValueObject.ActiveBooking;
             CreatedAt = DateTime.Now;
         }
 
