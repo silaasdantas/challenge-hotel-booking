@@ -1,7 +1,12 @@
 # :checkered_flag: Challenge Hotel Booking - API
 
 ### :point_right: Description
-Esse projeto faz parte de um desafio de desenvolvimento backend. 
+This project is part of a backend development challenge.  This is an API for a hotel that has only one room to book.  
+
+API requirements are: 
+- Every booking starts the next day.  
+- Only allowed to book the room for 3 days.  
+- It is not allowed to book the room more than 30 days in advance
 
 ### :point_right: Stack
 - **C#**
