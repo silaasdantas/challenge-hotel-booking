@@ -61,9 +61,9 @@ namespace Hotel.Booking.Core.Services
 
                     if (checkAvailabilityResult.Status.Equals(RoomStatusValueObject.Available))
                     {
-                        var booking = new BookingEntity(request.CheckIn, request.CheckOut, request.RoomId);
+                        var booking = new BookingEntity(request.CheckIn, request.CheckOut, request.RoomId, request.GuestName);
                         await _respository.CreateAsync(booking);
-
+                        
                         return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
                     }
 
@@ -140,7 +140,7 @@ namespace Hotel.Booking.Core.Services
                     if (result.Equals(RoomStatusValueObject.Available))
                         return (true, RoomStatusValueObject.Available, "Room available to book");
                     else
-                        return (true, RoomStatusValueObject.Booked, "Room not available for booking on this date");
+                        return (false, RoomStatusValueObject.Booked, "Room not available for booking on this date");
                 }
                 return (false, RoomStatusValueObject.None, "Room not found");
             }

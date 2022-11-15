@@ -2,7 +2,7 @@
 
 namespace Hotel.Booking.Core.Interfaces
 {
-    public interface IEfRepository<T> : IDisposable where T : class
+    public interface IEfRepository<T>  where T : class
     {
         Task<T?> GetByIdAsync(Guid id);     
         Task<IList<T>> GetAsync(Expression<Func<T, bool>> predicate);

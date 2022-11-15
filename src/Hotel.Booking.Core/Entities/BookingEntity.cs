@@ -5,12 +5,13 @@
         public Guid Id { get; set; }
         public DateTime CheckIn { get; set; }
         public DateTime CheckOut { get; set; }
+        public string GuestName { get; set; }
         public Guid RoomId { get; set; }
         public BookingStatusValueObject Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public RoomEntity Room { get; set; }
 
-        public BookingEntity(DateTime checkIn, DateTime checkOut, Guid roomId)
+        public BookingEntity(DateTime checkIn, DateTime checkOut, Guid roomId, string guestName)
         {
             Id = Guid.NewGuid();
             CheckIn = checkIn;
@@ -18,6 +19,7 @@
             RoomId = roomId;
             Status = BookingStatusValueObject.ActiveBooking;
             CreatedAt = DateTime.Now;
+            GuestName = guestName;
         }
 
         public void Cancel()

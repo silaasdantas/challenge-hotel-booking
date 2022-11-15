@@ -1,13 +1,9 @@
-using Hotel.Booking.Api.Configurations;
-using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.DTOs;
+using Hotel.Booking.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hotel.Booking.Api.Controllers
 {
-
-    [ApiVersion(ConstantsConfiguration.API_VERSION_1)]
-    [Route(ConstantsConfiguration.ROUTE_DEFAULT_CONTROLLER)]
     public class BookingController : ApiController
     {
         private readonly IBookingService _service;

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Hotel.Booking.Core.DTOs;
+using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.Profiles;
 using Hotel.Booking.Infra.Data.Db;
@@ -10,22 +11,20 @@ using Shouldly;
 
 namespace Hotel.Booking.Core.Services.Tests
 {
-    public class RoomServiceTests
+    public class RoomServiceTests 
     {
-        private DbContextOptions<HotelDbContext> options;
         private HotelDbContext dbContext;
-        private RoomRespository respository;
-        private RoomProfile roomProfile;
         private RoomService service;
 
         public RoomServiceTests()
         {
-            options = new DbContextOptionsBuilder<HotelDbContext>()
-              .UseInMemoryDatabase("BookingTestingDB")
-              .Options;
+            var options = new DbContextOptionsBuilder<HotelDbContext>()
+               .UseInMemoryDatabase(nameof(RoomServiceTests))
+               .Options;
             dbContext = new HotelDbContext(options);
-            respository = new RoomRespository(dbContext);
-            roomProfile = new RoomProfile();
+            CreateRooms(dbContext);
+            var respository = new RoomRespository(dbContext);
+            var roomProfile = new RoomProfile();
             var configuration = new MapperConfiguration(cfg => cfg.AddProfile(roomProfile));
             var mapper = new Mapper(configuration);
             service = new RoomService(respository, mapper);
@@ -38,10 +37,11 @@ namespace Hotel.Booking.Core.Services.Tests
             var result = await service.GetAllRoomsActivesAsync();
 
             //assert
-            result.IsSucess.ShouldBe(true);
+            result.IsSucess.ShouldBeTrue();
             result.Rooms.ShouldNotBeEmpty();
             result.Message.ShouldBeEmpty();
         }
+              
 
         [Fact]
         public async Task MustReturnAListRoomsEmpty_GetAllRoomsActives()
@@ -53,7 +53,7 @@ namespace Hotel.Booking.Core.Services.Tests
             var result = await serviceMock.Object.GetAllRoomsActivesAsync();
 
             //assert
-            result.IsSucess.ShouldBe(false);
+            result.IsSucess.ShouldBeFalse();
             result.Rooms.ShouldBeEmpty();
             result.Message.ShouldBe("Not found");
         }
@@ -73,8 +73,21 @@ namespace Hotel.Booking.Core.Services.Tests
             result.Message.ShouldBeEmpty();
         }
 
-        private (bool IsSucess, List<RoomResponse> Rooms, string Message) GetAllRoomsActivesMock() =>
-             (false, new List<RoomResponse>(), "Not found");
+        private async Task<(bool IsSucess, List<RoomResponse> Rooms, string Message)> GetAllRoomsActivesMock() => (false, new List<RoomResponse>(), "Not found");
 
+        private void CreateRooms(HotelDbContext dbContext)
+        {
+            if (!dbContext.Rooms.Any())
+            {
+                var roomA = new RoomEntity("MIO Cancún Hotel Boutique, Queen Suite") { Id = Guid.Parse("0b5786eb-cb60-4e89-bb4a-212d58d5efcd") };
+                var roomB = new RoomEntity("Hotel Krystal Cancún, Standard King Room")
+                {
+                    Id = Guid.NewGuid(),
+                    IsActive = false
+                };
+                dbContext.Rooms.AddRange(roomA, roomB);
+                dbContext.SaveChanges();
+            }
+        }
     }
 }

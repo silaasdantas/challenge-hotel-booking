@@ -6,6 +6,8 @@ using System.Net;
 
 namespace Hotel.Booking.Api.Controllers
 {
+    [ApiVersion("1")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     public abstract class ApiController : ControllerBase
     {

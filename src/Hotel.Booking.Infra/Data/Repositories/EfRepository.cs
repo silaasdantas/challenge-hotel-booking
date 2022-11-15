@@ -51,9 +51,5 @@ namespace Hotel.Booking.Infra.Data.Repositories
             return _dbContext.SaveChangesAsync();
         }
 
-        public void Dispose()
-        {
-            _dbContext.Dispose();
-        }
     }
 }
