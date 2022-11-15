@@ -6,50 +6,16 @@ using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using Moq;
 using Shouldly;
 
 namespace Hotel.Booking.UnitTest
 {
-    //As pessoas agora estão livres para viajar para todos os lugares, mas por causa da pandemia, muitos hotéis faliram.
-    //Alguns antigos lugares de viagens famosos ficam com apenas um hotel.Você recebeu a responsabilidade de desenvolver
-    //uma API de reservas para o último hotel em Cancun.
-
-    //Os requisitos são:
-    //- API será mantida pelo departamento de TI do hotel.
-    //- Como é o último hotel, a qualidade do serviço deve ser de 99,99 a 100% => sem downtime
-    //- Para efeitos do teste, assumimos que o hotel tem apenas um quarto disponível
-    //- Para dar oportunidade a todos de reservarem o quarto, a estadia não pode ser superior a 3 dias
-    // e não pode ser reservado com mais de 30 dias de antecedência.
-    //- Todas as reservas começam pelo menos no dia seguinte à reserva,
-    //- Para simplificar o caso de uso, um “DIA” no quarto do hotel começa das 00:00 às 23:59:59.
-    //- Cada usuário final pode verificar a disponibilidade do quarto, fazer uma reserva, cancelá-la ou modificá-la.
-    //- Para simplificar a API é inseguro.
 
     public class RoomUnitTest
     {
-
-        [Fact]
-        public async void MustGetAllRoomsActives()
-        {
-            //arrange
-            var bookingRequest = new Fixture().Create<BookingRequest>();
-            bookingRequest.CheckIn = DateTime.Now.AddDays(1);
-            bookingRequest.CheckOut = DateTime.Now.AddDays(4);
-
-            var repositoryMock = new Mock<IRoomRespository>();
-            var loggerMock = new Mock<ILogger<RoomService>>();
-            var mapperMock = new Mock<IMapper>();
-            var service = new RoomService(repositoryMock.Object, loggerMock.Object, mapperMock.Object);
-
-            //act
-            var result = await service.GetAllRoomsActivesAsync();
-
-            //assert
-            result.IsSucess.ShouldBe(true);
-            result.Rooms.ShouldNotBeNull();
-            result.Message.ShouldNotBeNull();
-        }
+        
 
 
         //[Fact]

@@ -1,6 +1,5 @@
 using Hotel.Booking.Api.Configurations;
 using Hotel.Booking.Core.Interfaces;
-using Hotel.Booking.Core.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hotel.Booking.Api.Controllers
@@ -37,27 +36,16 @@ namespace Hotel.Booking.Api.Controllers
             }
         }
 
-
-        [HttpPost("check-availability")]
-        public async Task<IActionResult> CheckRoomAvailabilityAsync([FromBody] BookingRequest request)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetByIdAsync(Guid id)
         {
             try
             {
-                if (ModelState.IsValid)
-                {
-                    var result = await _service.CheckRoomAvailabilityAsync(request);
-                    if (result.IsSucess)
-                    {
-                        return ResponseOk(new
-                        {
-                            result.Status,
-                            result.Message
-                        });
-                    }
+                var result = await _service.GetByIdAsync(id);
+                if (result.IsSucess)
+                    return ResponseOk(result.Room);
 
-                    return ResponseNotFound(result.Message);
-                }
-                return ResponseBadRequest(ModelState);
+                return ResponseNotFound(result.Message);
             }
             catch (Exception ex)
             {

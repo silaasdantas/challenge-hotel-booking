@@ -3,7 +3,6 @@ using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Handlers;
 using Hotel.Booking.Core.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace Hotel.Booking.Core.Services
 {
@@ -12,12 +11,13 @@ namespace Hotel.Booking.Core.Services
         public readonly IBookingRespository _respository;
         private readonly IMapper _mapper;
 
-        public BookingService(IBookingRespository respository, ILogger<RoomService> logger, IMapper mapper)
+        public BookingService(IBookingRespository respository, IMapper mapper)
         {
             _respository = respository;
             _mapper = mapper;
         }
-        public async Task<(bool IsSucess, List<BookingResponse> Bookings, string Message)> GetAllBookingAsync()
+
+        public async Task<(bool IsSucess, List<BookingResponse> Bookings, string Message)> GetAllAsync()
         {
             try
             {
@@ -33,7 +33,7 @@ namespace Hotel.Booking.Core.Services
             }
         }
 
-        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> GetBookingByIdAsync(Guid bookingId)
+        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> GetByIdAsync(Guid bookingId)
         {
             try
             {
@@ -53,13 +53,13 @@ namespace Hotel.Booking.Core.Services
         {
             try
             {
-                var exists = await _respository.AnyAsync(_ => _.RoomId.Equals(request.RoomId));
-                if (exists)
+                var checkAvailabilityResult = await CheckAvailabilityAsync(request);
+
+                if (checkAvailabilityResult.IsSucess)
                 {
                     ValidDateCheckInAndCheckout(request.CheckIn, request.CheckOut);
 
-                    var result = await _respository.CheckRoomAvailabilityAsync(request.RoomId, request.CheckIn, request.CheckOut);
-                    if (result.Equals(RoomStatusValueObject.Available))
+                    if (checkAvailabilityResult.Status.Equals(RoomStatusValueObject.Available))
                     {
                         var booking = new BookingEntity(request.CheckIn, request.CheckOut, request.RoomId);
                         await _respository.CreateAsync(booking);
@@ -69,7 +69,7 @@ namespace Hotel.Booking.Core.Services
 
                     return (false, null, "Room not available for booking on this date.");
                 }
-                return (false, null, "Room not found");
+                return (false, null, checkAvailabilityResult.Message);
             }
             catch (Exception)
             {
@@ -77,9 +77,7 @@ namespace Hotel.Booking.Core.Services
             }
         }
 
-
-
-        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> UpdateBookingAsync(UpdateBookingRequest request)
+        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> UpdateAsync(UpdateBookingRequest request)
         {
             try
             {
@@ -121,6 +119,30 @@ namespace Hotel.Booking.Core.Services
                 }
 
                 return (false, null, "Not found");
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public async Task<(bool IsSucess, RoomStatusValueObject Status, string Message)> CheckAvailabilityAsync(BookingRequest request)
+        {
+            try
+            {
+                var roomExists = await _respository.AnyAsync(_ => _.RoomId.Equals(request.RoomId));
+                if (roomExists)
+                {
+                    ValidDateCheckInAndCheckout(request.CheckIn, request.CheckOut);
+
+                    var result = await _respository.CheckRoomAvailabilityAsync(request.RoomId, request.CheckIn, request.CheckOut);
+
+                    if (result.Equals(RoomStatusValueObject.Available))
+                        return (true, RoomStatusValueObject.Available, "Room available to book");
+                    else
+                        return (true, RoomStatusValueObject.Booked, "Room not available for booking on this date");
+                }
+                return (false, RoomStatusValueObject.None, "Room not found");
             }
             catch (Exception)
             {

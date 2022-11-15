@@ -9,7 +9,7 @@
         
         public RoomEntity(string name)
         {
-            Id = Guid.Parse("0b5786eb-cb60-4e89-bb4a-212d58d5efcd"); //Guid.NewGuid();
+            Id = Guid.NewGuid();
             Name = name;
             IsActive = true;
             Bookings = new List<BookingEntity>();

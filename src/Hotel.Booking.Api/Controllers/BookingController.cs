@@ -24,7 +24,7 @@ namespace Hotel.Booking.Api.Controllers
         {
             try
             {
-                var result = await _service.GetAllBookingAsync();
+                var result = await _service.GetAllAsync();
                 if (result.IsSucess)
                     return ResponseOk(result.Bookings);
 
@@ -42,7 +42,7 @@ namespace Hotel.Booking.Api.Controllers
         {
             try
             {
-                var result = await _service.GetBookingByIdAsync(id);
+                var result = await _service.GetByIdAsync(id);
                 if (result.IsSucess)
                     return ResponseOk(result.Booking);
 
@@ -78,7 +78,7 @@ namespace Hotel.Booking.Api.Controllers
         {
             try
             {
-                var result = await _service.UpdateBookingAsync(request);
+                var result = await _service.UpdateAsync(request);
                 if (result.IsSucess)
                     return ResponseOk(result.Booking);
 
