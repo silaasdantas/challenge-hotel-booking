@@ -15,8 +15,6 @@ API requirements are:
 - **Entity Framework In Memory** 
 - **LINQ** 
 - **xUnit** 
-- **Moq** 
-- **Moq** 
 ### :point_right: Processo de Desenvolvimento
 
 I tried to follow best practices using Clean Code and SOLID concepts and API Design I tried not to do something so complex to solve a simple problem, but at the same time I organized the architecture in a clean way, containing the layers of:
