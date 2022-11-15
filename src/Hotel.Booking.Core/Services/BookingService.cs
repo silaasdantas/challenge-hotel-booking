@@ -67,7 +67,7 @@ namespace Hotel.Booking.Core.Services
                         return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
                     }
 
-                    return (false, null, "Room not available for booking on this date.");
+                    return (false, null, "Room not available for booking on this date");
                 }
                 return (false, null, checkAvailabilityResult.Message);
             }
@@ -86,7 +86,7 @@ namespace Hotel.Booking.Core.Services
                 {
                     ValidDateCheckInAndCheckout(request.CheckIn, request.CheckOut);
 
-                    var result = await _respository.CheckRoomAvailabilityAsync(booking.Id, request.CheckIn, request.CheckOut);
+                    var result = await _respository.CheckRoomAvailabilityAsync(booking.RoomId, request.CheckIn, request.CheckOut);
                     if (result.Equals(RoomStatusValueObject.Available))
                     {
                         booking.Update(request.CheckIn, request.CheckOut);

@@ -15,14 +15,16 @@ namespace Hotel.Booking.Infra.Data.Repositories
 
         public async Task<RoomStatusValueObject> CheckRoomAvailabilityAsync(Guid roomId, DateTime checkIn, DateTime checkOut)
         {
-            var result = await _dbSet.AsQueryable().AsNoTracking()
-                               .AnyAsync(_ => _.RoomId.Equals(roomId)
-                                           && _.CheckIn.Date <= checkIn.Date && _.CheckOut.Date >= checkIn.Date
-                                           || _.CheckIn.Date <= checkOut.Date && _.CheckOut.Date >= checkIn.Date);
+            var result = await _dbSet.AsQueryable()
+                                     .AsNoTracking()
+                                     .Include(_ => _.Room)
+                                     .AnyAsync(_ => (_.CheckIn.Date <= checkIn.Date && _.CheckOut.Date >= checkIn.Date
+                                                  || _.CheckIn.Date <= checkOut.Date && _.CheckOut.Date >= checkIn.Date)
+                                                  && _.RoomId.Equals(roomId) && _.Room.IsActive && _.Status.Equals(BookingStatusValueObject.ActiveBooking));
             if (result)
                 return RoomStatusValueObject.Booked;
             else
                 return RoomStatusValueObject.Available;
-        } 
+        }
     }
 }

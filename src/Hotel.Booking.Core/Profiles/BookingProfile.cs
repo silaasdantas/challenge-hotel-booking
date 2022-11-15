@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
 
 namespace Hotel.Booking.Core.Profiles
@@ -7,8 +8,10 @@ namespace Hotel.Booking.Core.Profiles
     {
         public BookingProfile()
         {
-            CreateMap<BookingEntity, DTOs.BookingResponse>();
-            CreateMap<DTOs.BookingResponse, BookingEntity>();
+            CreateMap<BookingEntity, BookingResponse>()
+                 .BeforeMap((src, dest) => dest.Status = src.Status.ToString());
+
+            CreateMap<BookingResponse, BookingEntity>();
         }
     }
 }

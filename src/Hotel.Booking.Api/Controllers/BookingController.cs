@@ -60,16 +60,20 @@ namespace Hotel.Booking.Api.Controllers
         {
             try
             {
-                var result = await _service.BookRoomAsync(request);
-                if (result.IsSucess)
-                    return ResponseCreated(result.Booking);
+                if (ModelState.IsValid)
+                {
+                    var result = await _service.BookRoomAsync(request);
+                    if (result.IsSucess)
+                        return ResponseCreated(result.Booking);
 
-                return ResponseNotFound(result.Message);
+                    return ResponseNotFound(result.Message);
+                }
+                return BadRequest(ModelState);
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex.ToString());
-                return ResponseBadRequest(ex.Message);
+                return BadRequest(ex.Message);
             }
         }
 
@@ -78,11 +82,16 @@ namespace Hotel.Booking.Api.Controllers
         {
             try
             {
-                var result = await _service.UpdateAsync(request);
-                if (result.IsSucess)
-                    return ResponseOk(result.Booking);
 
-                return ResponseNotFound(result.Message);
+                if (ModelState.IsValid)
+                {
+                    var result = await _service.UpdateAsync(request);
+                    if (result.IsSucess)
+                        return ResponseOk(result.Booking);
+
+                    return ResponseNotFound(result.Message);
+                }
+                return BadRequest(ModelState);
             }
             catch (Exception ex)
             {
@@ -101,6 +110,35 @@ namespace Hotel.Booking.Api.Controllers
                     return ResponseOk(result.Message);
 
                 return ResponseNotFound(result.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex.ToString());
+                return ResponseBadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("check-availability")]
+        public async Task<IActionResult> CheckRoomAvailabilityAsync([FromBody] BookingRequest request)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var result = await _service.CheckAvailabilityAsync(request);
+                    if (result.IsSucess)
+                    {
+                        var status = result.Status.ToString();
+                        return ResponseOk(new
+                        {
+                            status,
+                            result.Message
+                        });
+                    }
+
+                    return ResponseNotFound(result.Message);
+                }
+                return ResponseBadRequest(ModelState);
             }
             catch (Exception ex)
             {
