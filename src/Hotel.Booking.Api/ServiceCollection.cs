@@ -14,6 +14,7 @@ namespace Hotel.Booking.Api
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddRouting(opt => opt.LowercaseUrls = true);
             builder.Services.AddHealthChecks();
             builder.Services.AddDbContext<HotelDbContext>(opt => opt.UseInMemoryDatabase("BookingDB"));
             builder.Services.AddControllers()
@@ -30,7 +31,7 @@ namespace Hotel.Booking.Api
                 opt.AssumeDefaultVersionWhenUnspecified = true;
                 opt.ReportApiVersions = true;
             });
-            
+
             builder.AddServices();
             builder.AddRepositories();
         }
