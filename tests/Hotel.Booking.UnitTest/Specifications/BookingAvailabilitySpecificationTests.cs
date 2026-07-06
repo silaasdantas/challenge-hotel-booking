@@ -78,7 +78,7 @@ namespace Hotel.Booking.Core.Specifications.Tests
         public void ShouldNotConflict_WhenRoomIsInactive()
         {
             var booking = CreateBooking(new DateTime(2026, 7, 10), new DateTime(2026, 7, 12));
-            booking.Room.IsActive = false;
+            booking.Room.Deactivate();
             var specification = BookingAvailabilitySpecification
                 .ConflictsWith(roomId, new DateTime(2026, 7, 10), new DateTime(2026, 7, 12))
                 .Compile();
@@ -100,7 +100,7 @@ namespace Hotel.Booking.Core.Specifications.Tests
 
         private BookingEntity CreateBooking(DateTime checkIn, DateTime checkOut)
         {
-            var room = new RoomEntity("Test Room") { Id = roomId };
+            var room = new RoomEntity(roomId, "Test Room");
             return new BookingEntity(checkIn, checkOut, room.Id, "Test Guest")
             {
                 Room = room

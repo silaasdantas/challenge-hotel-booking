@@ -79,12 +79,9 @@ namespace Hotel.Booking.Core.Services.Tests
         {
             if (!dbContext.Rooms.Any())
             {
-                var roomA = new RoomEntity("MIO Cancún Hotel Boutique, Queen Suite") { Id = Guid.Parse("0b5786eb-cb60-4e89-bb4a-212d58d5efcd") };
-                var roomB = new RoomEntity("Hotel Krystal Cancún, Standard King Room")
-                {
-                    Id = Guid.NewGuid(),
-                    IsActive = false
-                };
+                var roomA = new RoomEntity(Guid.Parse("0b5786eb-cb60-4e89-bb4a-212d58d5efcd"), "MIO Cancún Hotel Boutique, Queen Suite");
+                var roomB = new RoomEntity(Guid.NewGuid(), "Hotel Krystal Cancún, Standard King Room");
+                roomB.Deactivate();
                 dbContext.Rooms.AddRange(roomA, roomB);
                 dbContext.SaveChanges();
             }

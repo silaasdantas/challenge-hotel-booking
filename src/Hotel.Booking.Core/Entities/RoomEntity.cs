@@ -2,17 +2,27 @@
 {
     public class RoomEntity
     {
-        public Guid Id { get; set; }
-        public string Name { get; set; }
-        public bool IsActive { get; set; }
-        public ICollection<BookingEntity> Bookings { get; set; }
+        public Guid Id { get; private set; }
+        public string Name { get; private set; }
+        public bool IsActive { get; private set; }
+        public ICollection<BookingEntity> Bookings { get; private set; }
         
         public RoomEntity(string name)
+            : this(Guid.NewGuid(), name)
         {
-            Id = Guid.NewGuid();
+        }
+
+        public RoomEntity(Guid id, string name)
+        {
+            Id = id;
             Name = name;
             IsActive = true;
             Bookings = new List<BookingEntity>();
+        }
+
+        public void Deactivate()
+        {
+            IsActive = false;
         }
     }
 }

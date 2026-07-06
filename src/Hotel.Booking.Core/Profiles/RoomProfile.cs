@@ -9,7 +9,6 @@ namespace Hotel.Booking.Core.Profiles
         public RoomProfile()
         {
             CreateMap<RoomEntity, RoomResponse>();
-            CreateMap<RoomResponse, RoomEntity>();
         }
     }
 }

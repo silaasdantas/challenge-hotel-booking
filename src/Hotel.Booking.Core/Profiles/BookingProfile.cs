@@ -10,8 +10,6 @@ namespace Hotel.Booking.Core.Profiles
         {
             CreateMap<BookingEntity, BookingResponse>()
                  .BeforeMap((src, dest) => dest.Status = src.Status.ToString());
-
-            CreateMap<BookingResponse, BookingEntity>();
         }
     }
 }
