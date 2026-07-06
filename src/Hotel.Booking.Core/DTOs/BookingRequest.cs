@@ -11,6 +11,7 @@ namespace Hotel.Booking.Core.DTOs
         [Required]
         public DateTime CheckOut { get; set; }
         [Required]
+        [MinLength(1)]
         public string GuestName { get; set; }
 
     }

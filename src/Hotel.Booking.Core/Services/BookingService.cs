@@ -38,6 +38,8 @@ namespace Hotel.Booking.Core.Services
 
         public async Task<(bool IsSucess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> BookRoomAsync(BookingRequest request)
         {
+            BookingRequestValidator.ValidateForBooking(request);
+
             var checkAvailabilityResult = await CheckAvailabilityAsync(request);
             if (!checkAvailabilityResult.IsSucess)
                 return (false, checkAvailabilityResult.StatusResult, null, checkAvailabilityResult.Message);
@@ -53,6 +55,8 @@ namespace Hotel.Booking.Core.Services
 
         public async Task<(bool IsSucess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> UpdateAsync(UpdateBookingRequest request)
         {
+            BookingRequestValidator.ValidateForUpdate(request);
+
             var booking = await _respository.GetByIdAsync(request.BookingId);
             if (booking == null)
                 return (false, ServiceResultStatus.NotFound, null, "Not found");
@@ -83,6 +87,8 @@ namespace Hotel.Booking.Core.Services
 
         public async Task<(bool IsSucess, ServiceResultStatus StatusResult, RoomStatusValueObject Status, string Message)> CheckAvailabilityAsync(BookingRequest request)
         {
+            BookingRequestValidator.ValidateForAvailability(request);
+
             var roomExists = await _respository.AnyAsync(_ => _.RoomId.Equals(request.RoomId));
             if (!roomExists)
                 return (false, ServiceResultStatus.NotFound, RoomStatusValueObject.None, "Room not found");

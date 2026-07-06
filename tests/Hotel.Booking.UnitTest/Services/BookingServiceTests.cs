@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
+using Hotel.Booking.Core.Exceptions;
 using Hotel.Booking.Core.Profiles;
 using Hotel.Booking.Core.Results;
 using Hotel.Booking.Infra.Data.Db;
@@ -146,6 +147,38 @@ namespace Hotel.Booking.Core.Services.Tests
         }
 
         [Fact]
+        public async Task MustRejectEmptyRoomId_BookRoomAsync()
+        {
+            var bookingRequest = new BookingRequest()
+            {
+                CheckIn = DateTime.Today.AddDays(5),
+                CheckOut = DateTime.Today.AddDays(7),
+                RoomId = Guid.Empty,
+                GuestName = "Elon Musk"
+            };
+
+            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.BookRoomAsync(bookingRequest));
+
+            exception.Message.ShouldBe("RoomId is required.");
+        }
+
+        [Fact]
+        public async Task MustRejectEmptyGuestName_BookRoomAsync()
+        {
+            var bookingRequest = new BookingRequest()
+            {
+                CheckIn = DateTime.Today.AddDays(5),
+                CheckOut = DateTime.Today.AddDays(7),
+                RoomId = Guid.Parse("0b5786eb-cb60-4e89-bb4a-212d58d5efcd"),
+                GuestName = " "
+            };
+
+            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.BookRoomAsync(bookingRequest));
+
+            exception.Message.ShouldBe("GuestName is required.");
+        }
+
+        [Fact]
         public async Task MustUpdateBook_UpdateAsync()
         {
             //arrange
@@ -209,6 +242,21 @@ namespace Hotel.Booking.Core.Services.Tests
             result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
             result.Booking.ShouldBeNull();
             result.Message.ShouldBe("Not found");
+        }
+
+        [Fact]
+        public async Task MustRejectEmptyBookingId_UpdateAsync()
+        {
+            var request = new UpdateBookingRequest()
+            {
+                CheckIn = DateTime.Today.AddDays(10),
+                CheckOut = DateTime.Today.AddDays(12),
+                BookingId = Guid.Empty
+            };
+
+            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.UpdateAsync(request));
+
+            exception.Message.ShouldBe("BookingId is required.");
         }
 
         [Fact]
@@ -306,6 +354,21 @@ namespace Hotel.Booking.Core.Services.Tests
             result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
             result.Status.ShouldBe(RoomStatusValueObject.None);
             result.Message.ShouldBe("Room not found");
+        }
+
+        [Fact]
+        public async Task MustRejectEmptyRoomId_CheckAvailabilityAsync()
+        {
+            var bookingRequest = new BookingRequest()
+            {
+                CheckIn = DateTime.Today.AddDays(5),
+                CheckOut = DateTime.Today.AddDays(7),
+                RoomId = Guid.Empty
+            };
+
+            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.CheckAvailabilityAsync(bookingRequest));
+
+            exception.Message.ShouldBe("RoomId is required.");
         }
 
         private void CreateRooms(HotelDbContext dbContext)
