@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a .NET 6 hotel booking API organized in `Hotel.Booking.sln`.
+This is a .NET 10 hotel booking API organized in `Hotel.Booking.sln`.
 
 - `src/Hotel.Booking.Api`: ASP.NET Core API, controllers, HTTP extensions, Swagger setup, and app settings.
 - `src/Hotel.Booking.Core`: domain DTOs, entities, validation handlers, interfaces, AutoMapper profiles, and services.
@@ -49,3 +49,30 @@ Pull requests should include a short description, changed behavior, tests run, a
 ## Security & Configuration Tips
 
 Do not commit secrets or machine-specific configuration. Keep environment-specific values in `appsettings.Development.json` or local environment variables. The current data store is EF Core InMemory, so do not treat local seeded data as persistent production state.
+
+## Engineering Constitution
+
+Treat security, performance, resilience, observability, high cohesion, low coupling, and low cyclomatic complexity as design criteria for every change. Apply them proportionally: improve the code for the risk in front of you, but do not add cache, queues, retries, locks, distributed tracing, or extra abstractions without evidence that they are needed.
+
+- **Security:** never expose secrets, sensitive data, or internal implementation details in logs or responses. Validate input before persistence and prefer explicit domain failures for expected business errors.
+- **Performance and resilience:** consider volume, cost, concurrency, provider translation, expected failures, and simplicity while designing the code. Choose database filtering, in-memory filtering, or hybrid flows based on the scenario, and document meaningful trade-offs.
+- **Observability:** logs should explain relevant events without leaking sensitive data. Errors should keep enough context for diagnosis. Critical operations should consider structured logs, correlation IDs, or health checks when useful.
+- **Trade-offs:** when security, performance, resilience, simplicity, and clarity conflict, record the decision, reason, alternatives considered, and residual risk in the change summary or PR.
+
+## Engineering Quality Rules
+
+Prioritize high cohesion, low coupling, and low cyclomatic complexity in every change.
+
+- Keep business rules in `Hotel.Booking.Core`. Controllers should only handle HTTP concerns, and repositories should only handle persistence queries.
+- Prefer small methods with one clear reason to change. If a method needs multiple nested branches, extract named private methods or domain validators.
+- Avoid adding abstractions unless they reduce real duplication, isolate a dependency, or make a business rule easier to test.
+- Do not let `Api` depend on persistence details. Do not put EF Core logic in controllers or domain validation in repositories.
+- Keep cyclomatic complexity low by using guard clauses, early returns, and explicit domain methods instead of deeply nested `if/else`.
+- New behavior must be covered by focused unit tests in `tests/Hotel.Booking.UnitTest`; endpoint behavior belongs in integration tests.
+- Preserve public contracts unless the task explicitly includes a breaking change.
+
+Before implementing, ask:
+1. Does this class still have one main responsibility?
+2. Is this change depending only on the layer it should know?
+3. Can the main behavior be tested without starting the API?
+4. Did complexity decrease or stay contained?

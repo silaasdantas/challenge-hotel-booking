@@ -1,5 +1,6 @@
 ﻿using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Interfaces;
+using Hotel.Booking.Core.Specifications;
 using Hotel.Booking.Infra.Data.Db;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,13 +19,12 @@ namespace Hotel.Booking.Infra.Data.Repositories
             var result = await _dbSet.AsQueryable()
                                      .AsNoTracking()
                                      .Include(_ => _.Room)
-                                     .AnyAsync(_ => (_.CheckIn.Date <= checkIn.Date && _.CheckOut.Date >= checkIn.Date
-                                                  || _.CheckIn.Date <= checkOut.Date && _.CheckOut.Date >= checkIn.Date)
-                                                  && _.RoomId.Equals(roomId) && _.Room.IsActive && _.Status.Equals(BookingStatusValueObject.ActiveBooking));
+                                     .AnyAsync(BookingAvailabilitySpecification.ConflictsWith(roomId, checkIn, checkOut));
+
             if (result)
                 return RoomStatusValueObject.Booked;
-            else
-                return RoomStatusValueObject.Available;
+
+            return RoomStatusValueObject.Available;
         }
     }
 }
