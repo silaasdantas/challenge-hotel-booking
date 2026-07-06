@@ -70,6 +70,11 @@ Use clear, well-structured communication focused on practical decisions and next
 - When the user is still providing context, acknowledge receipt and wait before analyzing or proposing changes.
 - Use Brazilian Portuguese for all responses by default, except for code, technical identifiers, commit messages, PR titles, and project files that should remain in English.
 - Prefer token-efficient collaboration: inspect only relevant files, avoid repeating context already established, keep explanations concise, and provide deeper detail only when it changes a decision or implementation.
+- When analyzing the project, identifying improvements, or reporting technical problems, use this concise structure by default:
+  `N. Problema: <short title>`
+  `Impacto: <concrete effect, with file/line references when available>`
+  `Correção mínima: <smallest practical fix that reduces the risk without overengineering>`
+- Keep analysis outputs concise and structured. Prefer actionable findings over long explanations. Include references to files, lines, official docs, or source repositories when they materially support the decision.
 
 ## Engineering Quality Rules
 
