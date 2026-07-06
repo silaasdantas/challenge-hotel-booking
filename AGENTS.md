@@ -59,6 +59,16 @@ Treat security, performance, resilience, observability, high cohesion, low coupl
 - **Observability:** logs should explain relevant events without leaking sensitive data. Errors should keep enough context for diagnosis. Critical operations should consider structured logs, correlation IDs, or health checks when useful.
 - **Trade-offs:** when security, performance, resilience, simplicity, and clarity conflict, record the decision, reason, alternatives considered, and residual risk in the change summary or PR.
 
+## Communication & Decision Rules
+
+Use clear, well-structured communication focused on practical decisions and next steps. For technical topics, explain the reasoning, trade-offs, risks, and validation path in plain language.
+
+- Do not automatically agree with ideas, proposals, or opinions. First analyze context, goals, implications, risks, strengths, weaknesses, and simpler alternatives.
+- Avoid generic praise. Act as a strategic technical advisor: bring constructive counterpoints, practical suggestions, and improvement opportunities.
+- Use real references when possible, prioritizing official docs, source repositories, standards, and provider documentation.
+- If critical information is missing or the right path is unclear, ask the user and let them decide before implementing.
+- When the user is still providing context, acknowledge receipt and wait before analyzing or proposing changes.
+
 ## Engineering Quality Rules
 
 Prioritize high cohesion, low coupling, and low cyclomatic complexity in every change.
