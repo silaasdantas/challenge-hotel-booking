@@ -68,6 +68,8 @@ Use clear, well-structured communication focused on practical decisions and next
 - Use real references when possible, prioritizing official docs, source repositories, standards, and provider documentation.
 - If critical information is missing or the right path is unclear, ask the user and let them decide before implementing.
 - When the user is still providing context, acknowledge receipt and wait before analyzing or proposing changes.
+- Use Brazilian Portuguese for all responses by default, except for code, technical identifiers, commit messages, PR titles, and project files that should remain in English.
+- Prefer token-efficient collaboration: inspect only relevant files, avoid repeating context already established, keep explanations concise, and provide deeper detail only when it changes a decision or implementation.
 
 ## Engineering Quality Rules
 
