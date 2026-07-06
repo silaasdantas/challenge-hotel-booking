@@ -2,6 +2,7 @@
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Profiles;
+using Hotel.Booking.Core.Results;
 using Hotel.Booking.Infra.Data.Db;
 using Hotel.Booking.Infra.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,7 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeTrue();
+            result.StatusResult.ShouldBe(ServiceResultStatus.Success);
             result.Bookings.ShouldNotBeEmpty();
             result.Message.ShouldBeEmpty();
         }
@@ -60,6 +62,7 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeFalse();
+            result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
             result.Bookings.ShouldBeEmpty();
             result.Message.ShouldBe("Not found");
         }
@@ -75,6 +78,7 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeTrue();
+            result.StatusResult.ShouldBe(ServiceResultStatus.Success);
             result.Booking.ShouldNotBeNull();
             result.Message.ShouldBeEmpty();
         }
@@ -90,6 +94,7 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeFalse();
+            result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
             result.Booking.ShouldBeNull();
             result.Message.ShouldBe("Not found");
         }
@@ -111,11 +116,34 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeTrue();
+            result.StatusResult.ShouldBe(ServiceResultStatus.Success);
             result.Booking.ShouldNotBeNull();
             result.Booking.Id.ToString().ShouldNotBeNull();
             result.Message.ShouldBeEmpty();
 
         }             
+
+        [Fact]
+        public async Task MustTryBookRoomWithReservation_BookRoomAsync()
+        {
+            //arrange
+            var bookingRequest = new BookingRequest()
+            {
+                CheckIn = DateTime.Now.AddDays(10),
+                CheckOut = DateTime.Now.AddDays(12),
+                RoomId = Guid.Parse("0b5786eb-cb60-4e89-bb4a-212d58d5efcd"),
+                GuestName = "Elon Musk"
+            };
+
+            //act
+            var result = await service.BookRoomAsync(bookingRequest);
+
+            //assert
+            result.IsSucess.ShouldBeFalse();
+            result.StatusResult.ShouldBe(ServiceResultStatus.Conflict);
+            result.Booking.ShouldBeNull();
+            result.Message.ShouldBe("Room not available for booking on this date");
+        }
 
         [Fact]
         public async Task MustUpdateBook_UpdateAsync()
@@ -133,6 +161,7 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeTrue();
+            result.StatusResult.ShouldBe(ServiceResultStatus.Success);
             result.Booking.ShouldNotBeNull();
             result.Booking.Id.ToString().ShouldBe(expected.BookingId.ToString());
             result.Booking.CheckIn.Date.ShouldBe(expected.CheckIn.Date);
@@ -156,6 +185,7 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeFalse();
+            result.StatusResult.ShouldBe(ServiceResultStatus.Conflict);
             result.Booking.ShouldBeNull();
             result.Message.ShouldBe("Room not available for booking on this date.");
         }
@@ -176,6 +206,7 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeFalse();
+            result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
             result.Booking.ShouldBeNull();
             result.Message.ShouldBe("Not found");
         }
@@ -191,6 +222,7 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeTrue();
+            result.StatusResult.ShouldBe(ServiceResultStatus.Success);
             result.Booking.ShouldNotBeNull();
             result.Booking.Status.ShouldBe("BookingCanceled");
             result.Message.ShouldBe("Booking successfully canceled");
@@ -208,6 +240,7 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeFalse();
+            result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
             result.Booking.ShouldBeNull();
             result.Message.ShouldBe("Not found");
         }
@@ -228,6 +261,7 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeTrue();
+            result.StatusResult.ShouldBe(ServiceResultStatus.Success);
             result.Status.ShouldBe(RoomStatusValueObject.Available);
             result.Message.ShouldBe("Room available to book");
         }
@@ -248,9 +282,31 @@ namespace Hotel.Booking.Core.Services.Tests
 
             //assert
             result.IsSucess.ShouldBeFalse();
+            result.StatusResult.ShouldBe(ServiceResultStatus.Conflict);
             result.Status.ShouldBe(RoomStatusValueObject.Booked);
             result.Message.ShouldBe("Room not available for booking on this date");
-        }      
+        }
+
+        [Fact]
+        public async Task MustTryValidateANonExistingRoom_CheckAvailabilityAsync()
+        {
+            //arrange
+            var bookingRequest = new BookingRequest()
+            {
+                CheckIn = DateTime.Now.AddDays(5),
+                CheckOut = DateTime.Now.AddDays(7),
+                RoomId = Guid.NewGuid()
+            };
+
+            //act
+            var result = await service.CheckAvailabilityAsync(bookingRequest);
+
+            //assert
+            result.IsSucess.ShouldBeFalse();
+            result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
+            result.Status.ShouldBe(RoomStatusValueObject.None);
+            result.Message.ShouldBe("Room not found");
+        }
 
         private void CreateRooms(HotelDbContext dbContext)
         {

@@ -2,6 +2,7 @@
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Interfaces;
+using Hotel.Booking.Core.Results;
 using Hotel.Booking.Core.Validators;
 
 namespace Hotel.Booking.Core.Services
@@ -17,82 +18,82 @@ namespace Hotel.Booking.Core.Services
             _mapper = mapper;
         }
 
-        public async Task<(bool IsSucess, List<BookingResponse> Bookings, string Message)> GetAllAsync()
+        public async Task<(bool IsSucess, ServiceResultStatus StatusResult, List<BookingResponse> Bookings, string Message)> GetAllAsync()
         {
             var bookings = await _respository.GetAllAsync();
             if (bookings != null && bookings.Any())
-                return (true, _mapper.Map<IEnumerable<BookingEntity>, List<BookingResponse>>(bookings), string.Empty);
+                return (true, ServiceResultStatus.Success, _mapper.Map<IEnumerable<BookingEntity>, List<BookingResponse>>(bookings), string.Empty);
 
-            return (false, new List<BookingResponse>(), "Not found");
+            return (false, ServiceResultStatus.NotFound, new List<BookingResponse>(), "Not found");
         }
 
-        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> GetByIdAsync(Guid bookingId)
+        public async Task<(bool IsSucess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> GetByIdAsync(Guid bookingId)
         {
             var booking = await _respository.GetByIdAsync(bookingId);
             if (booking != null)
-                return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
+                return (true, ServiceResultStatus.Success, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
 
-            return (false, null, Message: "Not found");
+            return (false, ServiceResultStatus.NotFound, null, Message: "Not found");
         }
 
-        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> BookRoomAsync(BookingRequest request)
+        public async Task<(bool IsSucess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> BookRoomAsync(BookingRequest request)
         {
             var checkAvailabilityResult = await CheckAvailabilityAsync(request);
             if (!checkAvailabilityResult.IsSucess)
-                return (false, null, checkAvailabilityResult.Message);
+                return (false, checkAvailabilityResult.StatusResult, null, checkAvailabilityResult.Message);
 
             if (!checkAvailabilityResult.Status.Equals(RoomStatusValueObject.Available))
-                return (false, null, "Room not available for booking on this date");
+                return (false, ServiceResultStatus.Conflict, null, "Room not available for booking on this date");
 
             var booking = new BookingEntity(request.CheckIn, request.CheckOut, request.RoomId, request.GuestName);
             await _respository.CreateAsync(booking);
 
-            return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
+            return (true, ServiceResultStatus.Success, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
         }
 
-        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> UpdateAsync(UpdateBookingRequest request)
+        public async Task<(bool IsSucess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> UpdateAsync(UpdateBookingRequest request)
         {
             var booking = await _respository.GetByIdAsync(request.BookingId);
             if (booking == null)
-                return (false, null, "Not found");
+                return (false, ServiceResultStatus.NotFound, null, "Not found");
 
             BookingDateValidator.Validate(request.CheckIn, request.CheckOut);
 
             var result = await _respository.CheckRoomAvailabilityAsync(booking.RoomId, request.CheckIn, request.CheckOut);
             if (!result.Equals(RoomStatusValueObject.Available))
-                return (false, null, "Room not available for booking on this date.");
+                return (false, ServiceResultStatus.Conflict, null, "Room not available for booking on this date.");
 
             booking.Update(request.CheckIn, request.CheckOut);
             await _respository.UpdateAsync(booking);
 
-            return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
+            return (true, ServiceResultStatus.Success, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
         }
 
-        public async Task<(bool IsSucess, BookingResponse? Booking, string Message)> CancelAsync(Guid bookingId)
+        public async Task<(bool IsSucess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> CancelAsync(Guid bookingId)
         {
             var booking = await _respository.GetByIdAsync(bookingId);
             if (booking == null)
-                return (false, null, "Not found");
+                return (false, ServiceResultStatus.NotFound, null, "Not found");
 
             booking.Cancel();
             await _respository.UpdateAsync(booking);
 
-            return (true, _mapper.Map<BookingEntity, BookingResponse>(booking), "Booking successfully canceled");
+            return (true, ServiceResultStatus.Success, _mapper.Map<BookingEntity, BookingResponse>(booking), "Booking successfully canceled");
         }
 
-        public async Task<(bool IsSucess, RoomStatusValueObject Status, string Message)> CheckAvailabilityAsync(BookingRequest request)
+        public async Task<(bool IsSucess, ServiceResultStatus StatusResult, RoomStatusValueObject Status, string Message)> CheckAvailabilityAsync(BookingRequest request)
         {
             var roomExists = await _respository.AnyAsync(_ => _.RoomId.Equals(request.RoomId));
             if (!roomExists)
-                return (false, RoomStatusValueObject.None, "Room not found");
+                return (false, ServiceResultStatus.NotFound, RoomStatusValueObject.None, "Room not found");
 
             BookingDateValidator.Validate(request.CheckIn, request.CheckOut);
 
             var result = await _respository.CheckRoomAvailabilityAsync(request.RoomId, request.CheckIn, request.CheckOut);
             if (result.Equals(RoomStatusValueObject.Available))
-                return (true, RoomStatusValueObject.Available, "Room available to book");
+                return (true, ServiceResultStatus.Success, RoomStatusValueObject.Available, "Room available to book");
 
-            return (false, RoomStatusValueObject.Booked, "Room not available for booking on this date");
+            return (false, ServiceResultStatus.Conflict, RoomStatusValueObject.Booked, "Room not available for booking on this date");
         }
 
     }

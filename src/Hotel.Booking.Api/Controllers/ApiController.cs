@@ -43,6 +43,9 @@ namespace Hotel.Booking.Api.Controllers
         protected IActionResult ResponseBadRequest() =>
             Response(HttpStatusCode.BadRequest, errorMessage: "The request is invalid");
 
+        protected IActionResult ResponseConflict(string errorMessage) =>
+            Response(HttpStatusCode.Conflict, errorMessage: errorMessage);
+
         protected IActionResult ResponseNotFound(string errorMessage) =>
             Response(HttpStatusCode.NotFound, errorMessage: errorMessage);
 

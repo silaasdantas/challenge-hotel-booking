@@ -1,5 +1,6 @@
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Interfaces;
+using Hotel.Booking.Core.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hotel.Booking.Api.Controllers
@@ -24,7 +25,7 @@ namespace Hotel.Booking.Api.Controllers
                 if (result.IsSucess)
                     return ResponseOk(result.Bookings);
 
-                return ResponseNotFound(result.Message);
+                return ResponseFailure(result.StatusResult, result.Message);
             }
             catch (Exception ex)
             {
@@ -42,7 +43,7 @@ namespace Hotel.Booking.Api.Controllers
                 if (result.IsSucess)
                     return ResponseOk(result.Booking);
 
-                return ResponseNotFound(result.Message);
+                return ResponseFailure(result.StatusResult, result.Message);
             }
             catch (Exception ex)
             {
@@ -62,7 +63,7 @@ namespace Hotel.Booking.Api.Controllers
                     if (result.IsSucess)
                         return ResponseCreated(result.Booking);
 
-                    return ResponseNotFound(result.Message);
+                    return ResponseFailure(result.StatusResult, result.Message);
                 }
                 return BadRequest(ModelState);
             }
@@ -85,7 +86,7 @@ namespace Hotel.Booking.Api.Controllers
                     if (result.IsSucess)
                         return ResponseOk(result.Booking);
 
-                    return ResponseNotFound(result.Message);
+                    return ResponseFailure(result.StatusResult, result.Message);
                 }
                 return BadRequest(ModelState);
             }
@@ -105,7 +106,7 @@ namespace Hotel.Booking.Api.Controllers
                 if (result.IsSucess)
                     return ResponseOk(result.Message);
 
-                return ResponseNotFound(result.Message);
+                return ResponseFailure(result.StatusResult, result.Message);
             }
             catch (Exception ex)
             {
@@ -132,7 +133,7 @@ namespace Hotel.Booking.Api.Controllers
                         });
                     }
 
-                    return ResponseNotFound(result.Message);
+                    return ResponseFailure(result.StatusResult, result.Message);
                 }
                 return ResponseBadRequest(ModelState);
             }
@@ -141,6 +142,16 @@ namespace Hotel.Booking.Api.Controllers
                 _logger?.LogError(ex.ToString());
                 return ResponseBadRequest(ex.Message);
             }
+        }
+
+        private IActionResult ResponseFailure(ServiceResultStatus statusResult, string message)
+        {
+            return statusResult switch
+            {
+                ServiceResultStatus.Conflict => ResponseConflict(message),
+                ServiceResultStatus.ValidationError => ResponseBadRequest(message),
+                _ => ResponseNotFound(message)
+            };
         }
     }
 }
