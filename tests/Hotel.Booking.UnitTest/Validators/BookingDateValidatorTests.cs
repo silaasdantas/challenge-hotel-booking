@@ -1,3 +1,4 @@
+using Hotel.Booking.Core.Exceptions;
 using Hotel.Booking.Core.Validators;
 using Shouldly;
 
@@ -20,7 +21,7 @@ namespace Hotel.Booking.Core.Validators.Tests
             var checkIn = DateTime.Today;
             var checkOut = DateTime.Today.AddDays(2);
 
-            var exception = Should.Throw<Exception>(() => BookingDateValidator.Validate(checkIn, checkOut));
+            var exception = Should.Throw<BookingValidationException>(() => BookingDateValidator.Validate(checkIn, checkOut));
             exception.Message.ShouldBe("All reservations must start at least the next day of booking.");
         }
 
@@ -30,7 +31,7 @@ namespace Hotel.Booking.Core.Validators.Tests
             var checkIn = DateTime.Today.AddDays(-1);
             var checkOut = DateTime.Today.AddDays(2);
 
-            var exception = Should.Throw<Exception>(() => BookingDateValidator.Validate(checkIn, checkOut));
+            var exception = Should.Throw<BookingValidationException>(() => BookingDateValidator.Validate(checkIn, checkOut));
             exception.Message.ShouldBe("All reservations must start at least the next day of booking.");
         }
 
@@ -40,7 +41,7 @@ namespace Hotel.Booking.Core.Validators.Tests
             var checkIn = DateTime.Today.AddDays(5);
             var checkOut = DateTime.Today.AddDays(4);
 
-            var exception = Should.Throw<Exception>(() => BookingDateValidator.Validate(checkIn, checkOut));
+            var exception = Should.Throw<BookingValidationException>(() => BookingDateValidator.Validate(checkIn, checkOut));
             exception.Message.ShouldBe("The end date must be greater than the start date.");
         }
 
@@ -50,7 +51,7 @@ namespace Hotel.Booking.Core.Validators.Tests
             var checkIn = DateTime.Today.AddDays(31);
             var checkOut = DateTime.Today.AddDays(33);
 
-            var exception = Should.Throw<Exception>(() => BookingDateValidator.Validate(checkIn, checkOut));
+            var exception = Should.Throw<BookingValidationException>(() => BookingDateValidator.Validate(checkIn, checkOut));
             exception.Message.ShouldBe("Rooms can`t be reserved more than 30 days in advance.");
         }
 
@@ -60,7 +61,7 @@ namespace Hotel.Booking.Core.Validators.Tests
             var checkIn = DateTime.Today.AddDays(5);
             var checkOut = DateTime.Today.AddDays(9);
 
-            var exception = Should.Throw<Exception>(() => BookingDateValidator.Validate(checkIn, checkOut));
+            var exception = Should.Throw<BookingValidationException>(() => BookingDateValidator.Validate(checkIn, checkOut));
             exception.Message.ShouldBe("Rooms can`t be reserved for more than 3 days.");
         }
 
@@ -71,6 +72,14 @@ namespace Hotel.Booking.Core.Validators.Tests
             var checkOut = DateTime.Today.AddDays(8);
 
             Should.NotThrow(() => BookingDateValidator.Validate(checkIn, checkOut));
+        }
+
+        [Fact]
+        public void ShouldPreserveMessage_WhenBookingValidationExceptionIsCreated()
+        {
+            var exception = new BookingValidationException("Invalid booking date.");
+
+            exception.Message.ShouldBe("Invalid booking date.");
         }
     }
 }

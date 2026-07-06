@@ -1,4 +1,5 @@
 using Hotel.Booking.Core.DTOs;
+using Hotel.Booking.Core.Exceptions;
 using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.Results;
 using Microsoft.AspNetCore.Mvc;
@@ -67,6 +68,10 @@ namespace Hotel.Booking.Api.Controllers
                 }
                 return BadRequest(ModelState);
             }
+            catch (BookingValidationException ex)
+            {
+                return ResponseFailure(ServiceResultStatus.ValidationError, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger?.LogError(ex.ToString());
@@ -89,6 +94,10 @@ namespace Hotel.Booking.Api.Controllers
                     return ResponseFailure(result.StatusResult, result.Message);
                 }
                 return BadRequest(ModelState);
+            }
+            catch (BookingValidationException ex)
+            {
+                return ResponseFailure(ServiceResultStatus.ValidationError, ex.Message);
             }
             catch (Exception ex)
             {
@@ -136,6 +145,10 @@ namespace Hotel.Booking.Api.Controllers
                     return ResponseFailure(result.StatusResult, result.Message);
                 }
                 return ResponseBadRequest(ModelState);
+            }
+            catch (BookingValidationException ex)
+            {
+                return ResponseFailure(ServiceResultStatus.ValidationError, ex.Message);
             }
             catch (Exception ex)
             {
