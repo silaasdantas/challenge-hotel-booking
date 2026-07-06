@@ -1,25 +1,24 @@
 ﻿using AutoMapper;
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
-using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.Profiles;
 using Hotel.Booking.Infra.Data.Db;
 using Hotel.Booking.Infra.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Moq;
 using Shouldly;
 
 namespace Hotel.Booking.Core.Services.Tests
 {
     public class BookingServiceTests 
     {
-       private HotelDbContext dbContext;
-        private BookingService service;
+        private readonly HotelDbContext dbContext;
+        private readonly BookingService service;
+        private readonly IMapper mapper;
 
         public BookingServiceTests()
         {
             var options = new DbContextOptionsBuilder<HotelDbContext>()
-              .UseInMemoryDatabase(nameof(BookingServiceTests))
+              .UseInMemoryDatabase(Guid.NewGuid().ToString())
               .Options;
             dbContext = new HotelDbContext(options);
             CreateRooms(dbContext);
@@ -30,7 +29,7 @@ namespace Hotel.Booking.Core.Services.Tests
                 new RoomProfile()
             }));
 
-            var mapper = new Mapper(configuration);
+            mapper = new Mapper(configuration);
             service = new BookingService(respository, mapper);
         }
                
@@ -50,11 +49,14 @@ namespace Hotel.Booking.Core.Services.Tests
         [Fact]
         public async Task MustReturnAnEmptyListOfReservations_GetAllAsync()
         {
-            var serviceMock = new Mock<IBookingService>();
-            serviceMock.Setup(_ => _.GetAllAsync()).Returns(GetAllAsyncMock);
+            var options = new DbContextOptionsBuilder<HotelDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
+            var emptyDbContext = new HotelDbContext(options);
+            var emptyService = new BookingService(new BookingRespository(emptyDbContext), mapper);
 
             //act
-            var result = await serviceMock.Object.GetAllAsync();
+            var result = await emptyService.GetAllAsync();
 
             //assert
             result.IsSucess.ShouldBeFalse();
@@ -249,10 +251,6 @@ namespace Hotel.Booking.Core.Services.Tests
             result.Status.ShouldBe(RoomStatusValueObject.Booked);
             result.Message.ShouldBe("Room not available for booking on this date");
         }      
-
-
-        private async Task<(bool IsSucess, List<BookingResponse> Bookings, string Message)> GetAllAsyncMock() =>
-            (false, new List<BookingResponse>(), "Not found");
 
         private void CreateRooms(HotelDbContext dbContext)
         {
