@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
-using Hotel.Booking.Core.Handlers;
 using Hotel.Booking.Core.Interfaces;
+using Hotel.Booking.Core.Validators;
 
 namespace Hotel.Booking.Core.Services
 {
@@ -56,7 +56,7 @@ namespace Hotel.Booking.Core.Services
             if (booking == null)
                 return (false, null, "Not found");
 
-            ValidDateCheckInAndCheckout(request.CheckIn, request.CheckOut);
+            BookingDateValidator.Validate(request.CheckIn, request.CheckOut);
 
             var result = await _respository.CheckRoomAvailabilityAsync(booking.RoomId, request.CheckIn, request.CheckOut);
             if (!result.Equals(RoomStatusValueObject.Available))
@@ -86,7 +86,7 @@ namespace Hotel.Booking.Core.Services
             if (!roomExists)
                 return (false, RoomStatusValueObject.None, "Room not found");
 
-            ValidDateCheckInAndCheckout(request.CheckIn, request.CheckOut);
+            BookingDateValidator.Validate(request.CheckIn, request.CheckOut);
 
             var result = await _respository.CheckRoomAvailabilityAsync(request.RoomId, request.CheckIn, request.CheckOut);
             if (result.Equals(RoomStatusValueObject.Available))
@@ -95,14 +95,5 @@ namespace Hotel.Booking.Core.Services
             return (false, RoomStatusValueObject.Booked, "Room not available for booking on this date");
         }
 
-        private static void ValidDateCheckInAndCheckout(DateTime checkIn, DateTime checkOut)
-        {
-            var handler = new NextDayOfBookingValidationHandler();
-            handler.SetNext(new DateGreaterThanStartValidationHandler())
-                .SetNext(new AdvanceBookingDaysLimitValidationHandler())
-                .SetNext(new StayLimitValidationHandler());
-
-            handler.Handle(checkIn, checkOut);
-        }
     }
 }

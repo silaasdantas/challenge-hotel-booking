@@ -70,6 +70,7 @@ Prioritize high cohesion, low coupling, and low cyclomatic complexity in every c
 - Keep cyclomatic complexity low by using guard clauses, early returns, and explicit domain methods instead of deeply nested `if/else`.
 - New behavior must be covered by focused unit tests in `tests/Hotel.Booking.UnitTest`; endpoint behavior belongs in integration tests.
 - Preserve public contracts unless the task explicitly includes a breaking change.
+- After each implementation, include the suggested manual commit command in the final response. Do not execute the commit unless explicitly requested. Format: `git commit -m "Short imperative message"`.
 
 Before implementing, ask:
 1. Does this class still have one main responsibility?
