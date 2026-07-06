@@ -6,7 +6,7 @@ namespace Hotel.Booking.Core.Handlers
     {
         public override void Handle(DateTime checkIn, DateTime checkOut)
         {
-            if (checkIn.Date <= DateTime.Now)
+            if (checkIn.Date <= DateTime.Today)
                 throw new Exception("All reservations must start at least the next day of booking.");
             
             base.Handle(checkIn, checkOut);

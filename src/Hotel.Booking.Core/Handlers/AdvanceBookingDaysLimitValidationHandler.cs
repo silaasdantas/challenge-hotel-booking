@@ -8,7 +8,7 @@ namespace Hotel.Booking.Core.Handlers
         {
             var advanceBookingDaysLimit = 30;
 
-            if ((DateTime.Now.AddDays(advanceBookingDaysLimit).Date - checkIn.Date).Days <= -1)
+            if ((DateTime.Today.AddDays(advanceBookingDaysLimit) - checkIn.Date).Days <= -1)
                 throw new Exception($"Rooms can`t be reserved more than {advanceBookingDaysLimit} days in advance.");
 
             base.Handle(checkIn, checkOut);
