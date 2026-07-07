@@ -1,7 +1,5 @@
-using AutoMapper;
 using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Interfaces;
-using Hotel.Booking.Core.Profiles;
 using Moq;
 using Shouldly;
 
@@ -18,8 +16,7 @@ namespace Hotel.Booking.Core.Services.Tests
         {
             repositoryMock = new Mock<IRoomRepository>();
 
-            var configuration = new MapperConfiguration(cfg => cfg.AddProfile(new RoomProfile()));
-            service = new RoomService(repositoryMock.Object, new Mapper(configuration));
+            service = new RoomService(repositoryMock.Object);
         }
 
         [Fact]

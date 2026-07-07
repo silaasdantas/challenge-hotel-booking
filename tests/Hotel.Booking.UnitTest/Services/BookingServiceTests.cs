@@ -1,9 +1,7 @@
-using AutoMapper;
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Exceptions;
 using Hotel.Booking.Core.Interfaces;
-using Hotel.Booking.Core.Profiles;
 using Hotel.Booking.Core.Results;
 using Moq;
 using Shouldly;
@@ -22,13 +20,7 @@ namespace Hotel.Booking.Core.Services.Tests
         {
             repositoryMock = new Mock<IBookingRepository>();
 
-            var configuration = new MapperConfiguration(cfg => cfg.AddProfiles(new List<Profile>
-            {
-                new BookingProfile(),
-                new RoomProfile()
-            }));
-
-            service = new BookingService(repositoryMock.Object, new Mapper(configuration));
+            service = new BookingService(repositoryMock.Object);
         }
 
         [Fact]

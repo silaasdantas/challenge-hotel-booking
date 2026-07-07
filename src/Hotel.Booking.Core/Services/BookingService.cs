@@ -1,7 +1,7 @@
-using AutoMapper;
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Interfaces;
+using Hotel.Booking.Core.Mappers;
 using Hotel.Booking.Core.Results;
 using Hotel.Booking.Core.Validators;
 
@@ -10,19 +10,17 @@ namespace Hotel.Booking.Core.Services
     public class BookingService : IBookingService
     {
         private readonly IBookingRepository _repository;
-        private readonly IMapper _mapper;
 
-        public BookingService(IBookingRepository repository, IMapper mapper)
+        public BookingService(IBookingRepository repository)
         {
             _repository = repository;
-            _mapper = mapper;
         }
 
         public async Task<(bool IsSuccess, ServiceResultStatus StatusResult, List<BookingResponse> Bookings, string Message)> GetAllAsync()
         {
             var bookings = await _repository.GetAllAsync();
             if (bookings != null && bookings.Any())
-                return (true, ServiceResultStatus.Success, _mapper.Map<IEnumerable<BookingEntity>, List<BookingResponse>>(bookings), string.Empty);
+                return (true, ServiceResultStatus.Success, ResponseMapper.ToBookingResponseList(bookings), string.Empty);
 
             return (false, ServiceResultStatus.NotFound, new List<BookingResponse>(), "Not found");
         }
@@ -31,7 +29,7 @@ namespace Hotel.Booking.Core.Services
         {
             var booking = await _repository.GetByIdAsync(bookingId);
             if (booking != null)
-                return (true, ServiceResultStatus.Success, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
+                return (true, ServiceResultStatus.Success, ResponseMapper.ToBookingResponse(booking), string.Empty);
 
             return (false, ServiceResultStatus.NotFound, null, Message: "Not found");
         }
@@ -50,7 +48,7 @@ namespace Hotel.Booking.Core.Services
             var booking = new BookingEntity(request.CheckIn, request.CheckOut, request.RoomId, request.GuestName);
             await _repository.CreateAsync(booking);
 
-            return (true, ServiceResultStatus.Success, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
+            return (true, ServiceResultStatus.Success, ResponseMapper.ToBookingResponse(booking), string.Empty);
         }
 
         public async Task<(bool IsSuccess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> UpdateAsync(UpdateBookingRequest request)
@@ -70,7 +68,7 @@ namespace Hotel.Booking.Core.Services
             booking.Update(request.CheckIn, request.CheckOut);
             await _repository.UpdateAsync(booking);
 
-            return (true, ServiceResultStatus.Success, _mapper.Map<BookingEntity, BookingResponse>(booking), string.Empty);
+            return (true, ServiceResultStatus.Success, ResponseMapper.ToBookingResponse(booking), string.Empty);
         }
 
         public async Task<(bool IsSuccess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> CancelAsync(Guid bookingId)
@@ -82,7 +80,7 @@ namespace Hotel.Booking.Core.Services
             booking.Cancel();
             await _repository.UpdateAsync(booking);
 
-            return (true, ServiceResultStatus.Success, _mapper.Map<BookingEntity, BookingResponse>(booking), "Booking successfully canceled");
+            return (true, ServiceResultStatus.Success, ResponseMapper.ToBookingResponse(booking), "Booking successfully canceled");
         }
 
         public async Task<(bool IsSuccess, ServiceResultStatus StatusResult, RoomStatusValueObject Status, string Message)> CheckAvailabilityAsync(BookingRequest request)

@@ -1,20 +1,17 @@
-using AutoMapper;
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Interfaces;
+using Hotel.Booking.Core.Mappers;
 
 namespace Hotel.Booking.Core.Services
 {
     public class RoomService : IRoomService
     {
         public readonly IRoomRepository _repository;
-        private readonly IMapper _mapper;
 
-        public RoomService(IRoomRepository repository,
-            IMapper mapper)
+        public RoomService(IRoomRepository repository)
         {
             _repository = repository;
-            _mapper = mapper;
         }
 
         public async Task<(bool IsSuccess, List<RoomResponse> Rooms, string Message)> GetAllRoomsActivesAsync()
@@ -24,7 +21,7 @@ namespace Hotel.Booking.Core.Services
                 var rooms = await _repository.GetAllAsync();
                 if (rooms != null && rooms.Any())
                 {
-                    var result = _mapper.Map<List<RoomEntity>, List<RoomResponse>>(rooms);
+                    var result = ResponseMapper.ToRoomResponseList(rooms);
                     return (true, result, string.Empty);
                 }
                 return (false, new List<RoomResponse>(), "Not found");
@@ -41,7 +38,7 @@ namespace Hotel.Booking.Core.Services
             {
                 var room = await _repository.GetByIdAsync(id);
                 if (room != null)
-                    return (true, _mapper.Map<RoomEntity, RoomResponse>(room), string.Empty);
+                    return (true, ResponseMapper.ToRoomResponse(room), string.Empty);
 
                 return (false, null, Message: "Not found");
             }
