@@ -21,7 +21,7 @@ namespace Hotel.Booking.Api.Controllers
             try
             {
                 var result = await _service.GetAllRoomsActivesAsync();
-                if (result.IsSucess)
+                if (result.IsSuccess)
                     return ResponseOk(result.Rooms);
 
                 return ResponseNotFound();
@@ -39,7 +39,7 @@ namespace Hotel.Booking.Api.Controllers
             try
             {
                 var result = await _service.GetByIdAsync(id);
-                if (result.IsSucess)
+                if (result.IsSuccess)
                     return ResponseOk(result.Room);
 
                 return ResponseNotFound(result.Message);

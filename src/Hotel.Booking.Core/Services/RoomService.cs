@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Interfaces;
@@ -7,21 +7,21 @@ namespace Hotel.Booking.Core.Services
 {
     public class RoomService : IRoomService
     {
-        public readonly IRoomRespository _respository;
+        public readonly IRoomRepository _repository;
         private readonly IMapper _mapper;
 
-        public RoomService(IRoomRespository respository,
+        public RoomService(IRoomRepository repository,
             IMapper mapper)
         {
-            _respository = respository;
+            _repository = repository;
             _mapper = mapper;
         }
 
-        public async Task<(bool IsSucess, List<RoomResponse> Rooms, string Message)> GetAllRoomsActivesAsync()
+        public async Task<(bool IsSuccess, List<RoomResponse> Rooms, string Message)> GetAllRoomsActivesAsync()
         {
             try
             {
-                var rooms = await _respository.GetAllAsync();
+                var rooms = await _repository.GetAllAsync();
                 if (rooms != null && rooms.Any())
                 {
                     var result = _mapper.Map<List<RoomEntity>, List<RoomResponse>>(rooms);
@@ -35,11 +35,11 @@ namespace Hotel.Booking.Core.Services
             }
         }
 
-        public async Task<(bool IsSucess, RoomResponse? Room, string Message)> GetByIdAsync(Guid id)
+        public async Task<(bool IsSuccess, RoomResponse? Room, string Message)> GetByIdAsync(Guid id)
         {
             try
             {
-                var room = await _respository.GetByIdAsync(id);
+                var room = await _repository.GetByIdAsync(id);
                 if (room != null)
                     return (true, _mapper.Map<RoomEntity, RoomResponse>(room), string.Empty);
 

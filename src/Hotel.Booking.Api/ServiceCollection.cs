@@ -1,4 +1,4 @@
-﻿using Hotel.Booking.Core.Interfaces;
+using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.Services;
 using Hotel.Booking.Infra.Data.Db;
 using Hotel.Booking.Infra.Data.Repositories;
@@ -43,8 +43,8 @@ namespace Hotel.Booking.Api
         }
         private static void AddRepositories(this WebApplicationBuilder builder)
         {
-            builder.Services.AddScoped<IRoomRespository, RoomRespository>();
-            builder.Services.AddScoped<IBookingRespository, BookingRespository>();
+            builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+            builder.Services.AddScoped<IBookingRepository, BookingRepository>();
             builder.Services.AddScoped(typeof(IEfRepository<>), typeof(EfRepository<>));
         }
     }

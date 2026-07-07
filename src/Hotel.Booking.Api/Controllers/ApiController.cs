@@ -1,5 +1,5 @@
-﻿using Hotel.Booking.Api.Extensions;
-using Hotel.Booking.Api.Shrared;
+using Hotel.Booking.Api.Extensions;
+using Hotel.Booking.Api.Shared;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Net;

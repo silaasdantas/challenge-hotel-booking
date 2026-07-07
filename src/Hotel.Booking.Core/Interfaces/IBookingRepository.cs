@@ -1,9 +1,9 @@
-﻿using Hotel.Booking.Core.Entities;
+using Hotel.Booking.Core.Entities;
 using System.Linq.Expressions;
 
 namespace Hotel.Booking.Core.Interfaces
 {
-    public interface IBookingRespository
+    public interface IBookingRepository
     {
         Task<RoomStatusValueObject> CheckRoomAvailabilityAsync(Guid roomId, DateTime checkIn, DateTime checkOut);
         Task<List<BookingEntity>> GetAllAsync();

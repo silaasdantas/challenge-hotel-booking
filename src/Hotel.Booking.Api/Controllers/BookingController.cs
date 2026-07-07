@@ -23,7 +23,7 @@ namespace Hotel.Booking.Api.Controllers
             try
             {
                 var result = await _service.GetAllAsync();
-                if (result.IsSucess)
+                if (result.IsSuccess)
                     return ResponseOk(result.Bookings);
 
                 return ResponseFailure(result.StatusResult, result.Message);
@@ -41,7 +41,7 @@ namespace Hotel.Booking.Api.Controllers
             try
             {
                 var result = await _service.GetByIdAsync(id);
-                if (result.IsSucess)
+                if (result.IsSuccess)
                     return ResponseOk(result.Booking);
 
                 return ResponseFailure(result.StatusResult, result.Message);
@@ -61,7 +61,7 @@ namespace Hotel.Booking.Api.Controllers
                 if (ModelState.IsValid)
                 {
                     var result = await _service.BookRoomAsync(request);
-                    if (result.IsSucess)
+                    if (result.IsSuccess)
                         return ResponseCreated(result.Booking);
 
                     return ResponseFailure(result.StatusResult, result.Message);
@@ -88,7 +88,7 @@ namespace Hotel.Booking.Api.Controllers
                 if (ModelState.IsValid)
                 {
                     var result = await _service.UpdateAsync(request);
-                    if (result.IsSucess)
+                    if (result.IsSuccess)
                         return ResponseOk(result.Booking);
 
                     return ResponseFailure(result.StatusResult, result.Message);
@@ -112,7 +112,7 @@ namespace Hotel.Booking.Api.Controllers
             try
             {
                 var result = await _service.CancelAsync(id);
-                if (result.IsSucess)
+                if (result.IsSuccess)
                     return ResponseOk(result.Message);
 
                 return ResponseFailure(result.StatusResult, result.Message);
@@ -132,7 +132,7 @@ namespace Hotel.Booking.Api.Controllers
                 if (ModelState.IsValid)
                 {
                     var result = await _service.CheckAvailabilityAsync(request);
-                    if (result.IsSucess)
+                    if (result.IsSuccess)
                     {
                         var status = result.Status.ToString();
                         return ResponseOk(new
