@@ -15,7 +15,7 @@ namespace Hotel.Booking.Core.Specifications
                 && booking.Room.IsActive
                 && booking.Status.Equals(BookingStatusValueObject.ActiveBooking)
                 && booking.CheckIn.Date < requestedCheckOut
-                && booking.CheckOut.Date > requestedCheckIn;
+                && booking.CheckOut.Date >= requestedCheckIn;
         }
     }
 }

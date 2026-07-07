@@ -124,6 +124,24 @@ namespace Hotel.Booking.Api.Controllers
             }
         }
 
+        [HttpPut("checkout/{id}")]
+        public async Task<IActionResult> CheckOutAsync(Guid id)
+        {
+            try
+            {
+                var result = await _service.CheckOutAsync(id);
+                if (result.IsSuccess)
+                    return ResponseOk(result.Message);
+
+                return ResponseFailure(result.StatusResult, result.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex.ToString());
+                return ResponseBadRequest(ex.Message);
+            }
+        }
+
         [HttpPost("check-availability")]
         public async Task<IActionResult> CheckRoomAvailabilityAsync([FromBody] BookingRequest request)
         {

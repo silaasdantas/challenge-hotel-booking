@@ -8,6 +8,7 @@ namespace Hotel.Booking.Core.Interfaces
     {
         Task<(bool IsSuccess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> BookRoomAsync(BookingRequest request);
         Task<(bool IsSuccess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> CancelAsync(Guid bookingId);
+        Task<(bool IsSuccess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> CheckOutAsync(Guid bookingId);
         Task<(bool IsSuccess, ServiceResultStatus StatusResult, List<BookingResponse> Bookings, string Message)> GetAllAsync();
         Task<(bool IsSuccess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> GetByIdAsync(Guid bookingId);
         Task<(bool IsSuccess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> UpdateAsync(UpdateBookingRequest request);

@@ -1,4 +1,6 @@
-﻿namespace Hotel.Booking.Core.Entities
+using Hotel.Booking.Core.Exceptions;
+
+namespace Hotel.Booking.Core.Entities
 {
     public class BookingEntity
     {
@@ -30,6 +32,14 @@
         public void Cancel()
         {
             Status = BookingStatusValueObject.BookingCanceled;
+        }
+
+        public void CheckOutRoom()
+        {
+            if (Status.Equals(BookingStatusValueObject.BookingCanceled))
+                throw new BookingValidationException("Canceled booking cannot be checked out.");
+
+            Status = BookingStatusValueObject.CheckedOut;
         }
 
         public void Update(DateTime checkIn, DateTime checkOut)

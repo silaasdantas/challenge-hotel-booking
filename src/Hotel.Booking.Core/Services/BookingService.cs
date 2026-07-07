@@ -1,5 +1,6 @@
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
+using Hotel.Booking.Core.Exceptions;
 using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.Mappers;
 using Hotel.Booking.Core.Results;
@@ -81,6 +82,26 @@ namespace Hotel.Booking.Core.Services
             await _repository.UpdateAsync(booking);
 
             return (true, ServiceResultStatus.Success, ResponseMapper.ToBookingResponse(booking), "Booking successfully canceled");
+        }
+
+        public async Task<(bool IsSuccess, ServiceResultStatus StatusResult, BookingResponse? Booking, string Message)> CheckOutAsync(Guid bookingId)
+        {
+            var booking = await _repository.GetByIdAsync(bookingId);
+            if (booking == null)
+                return (false, ServiceResultStatus.NotFound, null, "Not found");
+
+            try
+            {
+                booking.CheckOutRoom();
+            }
+            catch (BookingValidationException ex)
+            {
+                return (false, ServiceResultStatus.ValidationError, null, ex.Message);
+            }
+
+            await _repository.UpdateAsync(booking);
+
+            return (true, ServiceResultStatus.Success, ResponseMapper.ToBookingResponse(booking), "Booking successfully checked out");
         }
 
         public async Task<(bool IsSuccess, ServiceResultStatus StatusResult, RoomStatusValueObject Status, string Message)> CheckAvailabilityAsync(BookingRequest request)
