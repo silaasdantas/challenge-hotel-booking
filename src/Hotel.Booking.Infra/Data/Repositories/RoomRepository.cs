@@ -1,13 +1,13 @@
-﻿using Hotel.Booking.Core.Entities;
+using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Infra.Data.Db;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hotel.Booking.Infra.Data.Repositories
 {
-    public class RoomRespository : EfRepository<RoomEntity>, IRoomRespository
+    public class RoomRepository : EfRepository<RoomEntity>, IRoomRepository
     {
-        public RoomRespository(HotelDbContext dbContext)
+        public RoomRepository(HotelDbContext dbContext)
             : base(dbContext) { }
 
         public async Task<List<RoomEntity>> GetAllAsync() => 

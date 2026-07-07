@@ -3,6 +3,7 @@
     public enum BookingStatusValueObject
     {
         ActiveBooking = 1,
-        BookingCanceled = 2
+        BookingCanceled = 2,
+        CheckedOut = 3
     }
 }

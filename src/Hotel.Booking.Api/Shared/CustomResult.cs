@@ -1,6 +1,6 @@
-﻿using System.Net;
+using System.Net;
 
-namespace Hotel.Booking.Api.Shrared
+namespace Hotel.Booking.Api.Shared
 {
     public class CustomResult
     {

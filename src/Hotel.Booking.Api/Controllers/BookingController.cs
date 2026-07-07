@@ -1,5 +1,7 @@
 using Hotel.Booking.Core.DTOs;
+using Hotel.Booking.Core.Exceptions;
 using Hotel.Booking.Core.Interfaces;
+using Hotel.Booking.Core.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hotel.Booking.Api.Controllers
@@ -21,10 +23,10 @@ namespace Hotel.Booking.Api.Controllers
             try
             {
                 var result = await _service.GetAllAsync();
-                if (result.IsSucess)
+                if (result.IsSuccess)
                     return ResponseOk(result.Bookings);
 
-                return ResponseNotFound(result.Message);
+                return ResponseFailure(result.StatusResult, result.Message);
             }
             catch (Exception ex)
             {
@@ -39,10 +41,10 @@ namespace Hotel.Booking.Api.Controllers
             try
             {
                 var result = await _service.GetByIdAsync(id);
-                if (result.IsSucess)
+                if (result.IsSuccess)
                     return ResponseOk(result.Booking);
 
-                return ResponseNotFound(result.Message);
+                return ResponseFailure(result.StatusResult, result.Message);
             }
             catch (Exception ex)
             {
@@ -59,12 +61,16 @@ namespace Hotel.Booking.Api.Controllers
                 if (ModelState.IsValid)
                 {
                     var result = await _service.BookRoomAsync(request);
-                    if (result.IsSucess)
+                    if (result.IsSuccess)
                         return ResponseCreated(result.Booking);
 
-                    return ResponseNotFound(result.Message);
+                    return ResponseFailure(result.StatusResult, result.Message);
                 }
                 return BadRequest(ModelState);
+            }
+            catch (BookingValidationException ex)
+            {
+                return ResponseFailure(ServiceResultStatus.ValidationError, ex.Message);
             }
             catch (Exception ex)
             {
@@ -82,12 +88,16 @@ namespace Hotel.Booking.Api.Controllers
                 if (ModelState.IsValid)
                 {
                     var result = await _service.UpdateAsync(request);
-                    if (result.IsSucess)
+                    if (result.IsSuccess)
                         return ResponseOk(result.Booking);
 
-                    return ResponseNotFound(result.Message);
+                    return ResponseFailure(result.StatusResult, result.Message);
                 }
                 return BadRequest(ModelState);
+            }
+            catch (BookingValidationException ex)
+            {
+                return ResponseFailure(ServiceResultStatus.ValidationError, ex.Message);
             }
             catch (Exception ex)
             {
@@ -102,10 +112,28 @@ namespace Hotel.Booking.Api.Controllers
             try
             {
                 var result = await _service.CancelAsync(id);
-                if (result.IsSucess)
+                if (result.IsSuccess)
                     return ResponseOk(result.Message);
 
-                return ResponseNotFound(result.Message);
+                return ResponseFailure(result.StatusResult, result.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex.ToString());
+                return ResponseBadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("checkout/{id}")]
+        public async Task<IActionResult> CheckOutAsync(Guid id)
+        {
+            try
+            {
+                var result = await _service.CheckOutAsync(id);
+                if (result.IsSuccess)
+                    return ResponseOk(result.Message);
+
+                return ResponseFailure(result.StatusResult, result.Message);
             }
             catch (Exception ex)
             {
@@ -122,7 +150,7 @@ namespace Hotel.Booking.Api.Controllers
                 if (ModelState.IsValid)
                 {
                     var result = await _service.CheckAvailabilityAsync(request);
-                    if (result.IsSucess)
+                    if (result.IsSuccess)
                     {
                         var status = result.Status.ToString();
                         return ResponseOk(new
@@ -132,15 +160,29 @@ namespace Hotel.Booking.Api.Controllers
                         });
                     }
 
-                    return ResponseNotFound(result.Message);
+                    return ResponseFailure(result.StatusResult, result.Message);
                 }
                 return ResponseBadRequest(ModelState);
+            }
+            catch (BookingValidationException ex)
+            {
+                return ResponseFailure(ServiceResultStatus.ValidationError, ex.Message);
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex.ToString());
                 return ResponseBadRequest(ex.Message);
             }
+        }
+
+        private IActionResult ResponseFailure(ServiceResultStatus statusResult, string message)
+        {
+            return statusResult switch
+            {
+                ServiceResultStatus.Conflict => ResponseConflict(message),
+                ServiceResultStatus.ValidationError => ResponseBadRequest(message),
+                _ => ResponseNotFound(message)
+            };
         }
     }
 }

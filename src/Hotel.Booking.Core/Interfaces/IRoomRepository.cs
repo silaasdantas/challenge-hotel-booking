@@ -1,8 +1,8 @@
-﻿using Hotel.Booking.Core.Entities;
+using Hotel.Booking.Core.Entities;
 
 namespace Hotel.Booking.Core.Interfaces
 {
-    public interface IRoomRespository
+    public interface IRoomRepository
     {
         Task<List<RoomEntity>> GetAllAsync();
         Task<RoomEntity> GetByIdAsync(Guid id);

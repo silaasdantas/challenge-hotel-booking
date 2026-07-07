@@ -1,19 +1,26 @@
-﻿namespace Hotel.Booking.Core.Entities
+using Hotel.Booking.Core.Exceptions;
+
+namespace Hotel.Booking.Core.Entities
 {
     public class BookingEntity
     {
-        public Guid Id { get; set; }
-        public DateTime CheckIn { get; set; }
-        public DateTime CheckOut { get; set; }
-        public string GuestName { get; set; }
-        public Guid RoomId { get; set; }
-        public BookingStatusValueObject Status { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public Guid Id { get; private set; }
+        public DateTime CheckIn { get; private set; }
+        public DateTime CheckOut { get; private set; }
+        public string GuestName { get; private set; }
+        public Guid RoomId { get; private set; }
+        public BookingStatusValueObject Status { get; private set; }
+        public DateTime CreatedAt { get; private set; }
         public RoomEntity Room { get; set; }
 
         public BookingEntity(DateTime checkIn, DateTime checkOut, Guid roomId, string guestName)
+            : this(Guid.NewGuid(), checkIn, checkOut, roomId, guestName)
         {
-            Id = Guid.NewGuid();
+        }
+
+        public BookingEntity(Guid id, DateTime checkIn, DateTime checkOut, Guid roomId, string guestName)
+        {
+            Id = id;
             CheckIn = checkIn;
             CheckOut = checkOut;
             RoomId = roomId;
@@ -25,6 +32,14 @@
         public void Cancel()
         {
             Status = BookingStatusValueObject.BookingCanceled;
+        }
+
+        public void CheckOutRoom()
+        {
+            if (Status.Equals(BookingStatusValueObject.BookingCanceled))
+                throw new BookingValidationException("Canceled booking cannot be checked out.");
+
+            Status = BookingStatusValueObject.CheckedOut;
         }
 
         public void Update(DateTime checkIn, DateTime checkOut)

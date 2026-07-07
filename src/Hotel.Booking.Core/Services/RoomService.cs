@@ -1,30 +1,27 @@
-﻿using AutoMapper;
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Interfaces;
+using Hotel.Booking.Core.Mappers;
 
 namespace Hotel.Booking.Core.Services
 {
     public class RoomService : IRoomService
     {
-        public readonly IRoomRespository _respository;
-        private readonly IMapper _mapper;
+        public readonly IRoomRepository _repository;
 
-        public RoomService(IRoomRespository respository,
-            IMapper mapper)
+        public RoomService(IRoomRepository repository)
         {
-            _respository = respository;
-            _mapper = mapper;
+            _repository = repository;
         }
 
-        public async Task<(bool IsSucess, List<RoomResponse> Rooms, string Message)> GetAllRoomsActivesAsync()
+        public async Task<(bool IsSuccess, List<RoomResponse> Rooms, string Message)> GetAllRoomsActivesAsync()
         {
             try
             {
-                var rooms = await _respository.GetAllAsync();
+                var rooms = await _repository.GetAllAsync();
                 if (rooms != null && rooms.Any())
                 {
-                    var result = _mapper.Map<List<RoomEntity>, List<RoomResponse>>(rooms);
+                    var result = ResponseMapper.ToRoomResponseList(rooms);
                     return (true, result, string.Empty);
                 }
                 return (false, new List<RoomResponse>(), "Not found");
@@ -35,13 +32,13 @@ namespace Hotel.Booking.Core.Services
             }
         }
 
-        public async Task<(bool IsSucess, RoomResponse? Room, string Message)> GetByIdAsync(Guid id)
+        public async Task<(bool IsSuccess, RoomResponse? Room, string Message)> GetByIdAsync(Guid id)
         {
             try
             {
-                var room = await _respository.GetByIdAsync(id);
+                var room = await _repository.GetByIdAsync(id);
                 if (room != null)
-                    return (true, _mapper.Map<RoomEntity, RoomResponse>(room), string.Empty);
+                    return (true, ResponseMapper.ToRoomResponse(room), string.Empty);
 
                 return (false, null, Message: "Not found");
             }
