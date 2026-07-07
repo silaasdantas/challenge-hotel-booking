@@ -76,6 +76,17 @@ Use clear, well-structured communication focused on practical decisions and next
   `Correção mínima: <smallest practical fix that reduces the risk without overengineering>`
 - Keep analysis outputs concise and structured. Prefer actionable findings over long explanations. Include references to files, lines, official docs, or source repositories when they materially support the decision.
 
+## Token Economy
+
+Use token-efficient collaboration by default, but never sacrifice technical clarity, security, validation, or traceability just to be shorter.
+
+- Keep responses short by default and avoid repeating context already established in the thread.
+- Prefer concise summaries with decisions, changed files, commands run, results, risks, and next steps.
+- Use RTK for verbose shell commands such as tests, builds, package audits, logs, large diffs, and broad searches.
+- Do not use RTK as a substitute for careful reasoning; it only reduces command output noise.
+- Keep Brazilian Portuguese as the default response language, unless code, identifiers, commits, PRs, or project files require English.
+- Treat Caveman as an optional experiment to install and validate separately. Do not assume it replaces RTK.
+
 ## Engineering Quality Rules
 
 Prioritize high cohesion, low coupling, and low cyclomatic complexity in every change.
