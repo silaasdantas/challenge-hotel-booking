@@ -164,6 +164,11 @@ namespace Hotel.Booking.Core.Services.Tests
             result.Booking.CheckIn.Date.ShouldBe(request.CheckIn.Date);
             result.Booking.CheckOut.Date.ShouldBe(request.CheckOut.Date);
             result.Message.ShouldBeEmpty();
+            repositoryMock.Verify(_ => _.CheckRoomAvailabilityAsync(
+                booking.RoomId,
+                request.CheckIn,
+                request.CheckOut,
+                booking.Id), Times.Once);
             repositoryMock.Verify(_ => _.UpdateAsync(booking), Times.Once);
         }
 
@@ -317,7 +322,7 @@ namespace Hotel.Booking.Core.Services.Tests
 
         private void SetupAvailability(RoomStatusValueObject status)
         {
-            repositoryMock.Setup(_ => _.CheckRoomAvailabilityAsync(RoomId, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            repositoryMock.Setup(_ => _.CheckRoomAvailabilityAsync(RoomId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<Guid?>()))
                 .ReturnsAsync(status);
         }
 

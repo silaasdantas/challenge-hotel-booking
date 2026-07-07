@@ -61,7 +61,7 @@ namespace Hotel.Booking.Core.Services
 
             BookingDateValidator.Validate(request.CheckIn, request.CheckOut);
 
-            var result = await _repository.CheckRoomAvailabilityAsync(booking.RoomId, request.CheckIn, request.CheckOut);
+            var result = await _repository.CheckRoomAvailabilityAsync(booking.RoomId, request.CheckIn, request.CheckOut, booking.Id);
             if (!result.Equals(RoomStatusValueObject.Available))
                 return (false, ServiceResultStatus.Conflict, null, "Room not available for booking on this date.");
 

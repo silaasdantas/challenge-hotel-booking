@@ -5,7 +5,7 @@ namespace Hotel.Booking.Core.Interfaces
 {
     public interface IBookingRepository
     {
-        Task<RoomStatusValueObject> CheckRoomAvailabilityAsync(Guid roomId, DateTime checkIn, DateTime checkOut);
+        Task<RoomStatusValueObject> CheckRoomAvailabilityAsync(Guid roomId, DateTime checkIn, DateTime checkOut, Guid? ignoredBookingId = null);
         Task<List<BookingEntity>> GetAllAsync();
         Task<BookingEntity> GetByIdAsync(Guid id);
         Task<bool> AnyAsync(Expression<Func<BookingEntity, bool>> predicate);

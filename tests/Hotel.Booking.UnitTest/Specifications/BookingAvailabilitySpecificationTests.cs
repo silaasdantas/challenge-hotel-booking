@@ -42,14 +42,36 @@ namespace Hotel.Booking.Core.Specifications.Tests
         }
 
         [Fact]
-        public void ShouldConflict_WhenRangeBordersAreEqual()
+        public void ShouldNotConflict_WhenRequestedCheckInEqualsExistingCheckOut()
         {
             var booking = CreateBooking(new DateTime(2026, 7, 10), new DateTime(2026, 7, 12));
             var specification = BookingAvailabilitySpecification
                 .ConflictsWith(roomId, new DateTime(2026, 7, 12), new DateTime(2026, 7, 14))
                 .Compile();
 
-            specification(booking).ShouldBeTrue();
+            specification(booking).ShouldBeFalse();
+        }
+
+        [Fact]
+        public void ShouldNotConflict_WhenRequestedCheckOutEqualsExistingCheckIn()
+        {
+            var booking = CreateBooking(new DateTime(2026, 7, 10), new DateTime(2026, 7, 12));
+            var specification = BookingAvailabilitySpecification
+                .ConflictsWith(roomId, new DateTime(2026, 7, 8), new DateTime(2026, 7, 10))
+                .Compile();
+
+            specification(booking).ShouldBeFalse();
+        }
+
+        [Fact]
+        public void ShouldNotConflict_WhenBookingIdIsIgnored()
+        {
+            var booking = CreateBooking(new DateTime(2026, 7, 10), new DateTime(2026, 7, 12));
+            var specification = BookingAvailabilitySpecification
+                .ConflictsWith(roomId, new DateTime(2026, 7, 10), new DateTime(2026, 7, 12), booking.Id)
+                .Compile();
+
+            specification(booking).ShouldBeFalse();
         }
 
         [Fact]
