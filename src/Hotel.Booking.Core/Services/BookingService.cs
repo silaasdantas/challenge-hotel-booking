@@ -39,7 +39,12 @@ namespace Hotel.Booking.Core.Services
         {
             BookingRequestValidator.ValidateForBooking(request);
 
-            var checkAvailabilityResult = await CheckAvailabilityAsync(request);
+            var checkAvailabilityResult = await CheckAvailabilityAsync(new AvailabilityRequest
+            {
+                RoomId = request.RoomId,
+                CheckIn = request.CheckIn,
+                CheckOut = request.CheckOut
+            });
             if (!checkAvailabilityResult.IsSuccess)
                 return (false, checkAvailabilityResult.StatusResult, null, checkAvailabilityResult.Message);
 
@@ -104,7 +109,7 @@ namespace Hotel.Booking.Core.Services
             return (true, ServiceResultStatus.Success, ResponseMapper.ToBookingResponse(booking), "Booking successfully checked out");
         }
 
-        public async Task<(bool IsSuccess, ServiceResultStatus StatusResult, RoomStatusValueObject Status, string Message)> CheckAvailabilityAsync(BookingRequest request)
+        public async Task<(bool IsSuccess, ServiceResultStatus StatusResult, RoomStatusValueObject Status, string Message)> CheckAvailabilityAsync(AvailabilityRequest request)
         {
             BookingRequestValidator.ValidateForAvailability(request);
 

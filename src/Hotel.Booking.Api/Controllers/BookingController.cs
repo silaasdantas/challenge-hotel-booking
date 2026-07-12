@@ -143,7 +143,7 @@ namespace Hotel.Booking.Api.Controllers
         }
 
         [HttpPost("check-availability")]
-        public async Task<IActionResult> CheckRoomAvailabilityAsync([FromBody] BookingRequest request)
+        public async Task<IActionResult> CheckRoomAvailabilityAsync([FromBody] AvailabilityRequest request)
         {
             try
             {

@@ -64,6 +64,19 @@ namespace Hotel.Booking.Core.Validators.Tests
         }
 
         [Fact]
+        public void ShouldAcceptAvailabilityRequest_WhenRequestIsValid()
+        {
+            var request = new AvailabilityRequest
+            {
+                RoomId = Guid.NewGuid(),
+                CheckIn = DateTime.Today.AddDays(1),
+                CheckOut = DateTime.Today.AddDays(3)
+            };
+
+            Should.NotThrow(() => BookingRequestValidator.ValidateForAvailability(request));
+        }
+
+        [Fact]
         public void ShouldAccept_WhenBookingRequestIsValid()
         {
             var request = CreateValidBookingRequest();

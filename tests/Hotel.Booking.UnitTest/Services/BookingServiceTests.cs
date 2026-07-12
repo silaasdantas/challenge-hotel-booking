@@ -366,7 +366,7 @@ namespace Hotel.Booking.Core.Services.Tests
             SetupRoomExists(true);
             SetupAvailability(RoomStatusValueObject.Available);
 
-            var result = await service.CheckAvailabilityAsync(CreateBookingRequest());
+            var result = await service.CheckAvailabilityAsync(CreateAvailabilityRequest());
 
             result.IsSuccess.ShouldBeTrue();
             result.StatusResult.ShouldBe(ServiceResultStatus.Success);
@@ -380,7 +380,7 @@ namespace Hotel.Booking.Core.Services.Tests
             SetupRoomExists(true);
             SetupAvailability(RoomStatusValueObject.Booked);
 
-            var result = await service.CheckAvailabilityAsync(CreateBookingRequest());
+            var result = await service.CheckAvailabilityAsync(CreateAvailabilityRequest());
 
             result.IsSuccess.ShouldBeFalse();
             result.StatusResult.ShouldBe(ServiceResultStatus.Conflict);
@@ -393,7 +393,7 @@ namespace Hotel.Booking.Core.Services.Tests
         {
             SetupRoomExists(false);
 
-            var result = await service.CheckAvailabilityAsync(CreateBookingRequest());
+            var result = await service.CheckAvailabilityAsync(CreateAvailabilityRequest());
 
             result.IsSuccess.ShouldBeFalse();
             result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
@@ -404,10 +404,10 @@ namespace Hotel.Booking.Core.Services.Tests
         [Fact]
         public async Task MustRejectEmptyRoomId_CheckAvailabilityAsync()
         {
-            var bookingRequest = CreateBookingRequest();
-            bookingRequest.RoomId = Guid.Empty;
+            var request = CreateAvailabilityRequest();
+            request.RoomId = Guid.Empty;
 
-            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.CheckAvailabilityAsync(bookingRequest));
+            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.CheckAvailabilityAsync(request));
 
             exception.Message.ShouldBe("RoomId is required.");
             repositoryMock.Verify(_ => _.AnyAsync(It.IsAny<System.Linq.Expressions.Expression<Func<BookingEntity, bool>>>()), Times.Never);
@@ -433,6 +433,16 @@ namespace Hotel.Booking.Core.Services.Tests
                 CheckOut = DateTime.Today.AddDays(19),
                 RoomId = RoomId,
                 GuestName = "Elon Musk"
+            };
+        }
+
+        private static AvailabilityRequest CreateAvailabilityRequest()
+        {
+            return new AvailabilityRequest
+            {
+                CheckIn = DateTime.Today.AddDays(16),
+                CheckOut = DateTime.Today.AddDays(19),
+                RoomId = RoomId
             };
         }
 
