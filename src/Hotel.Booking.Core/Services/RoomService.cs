@@ -1,54 +1,38 @@
-﻿using AutoMapper;
 using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Entities;
 using Hotel.Booking.Core.Interfaces;
+using Hotel.Booking.Core.Mappers;
 
 namespace Hotel.Booking.Core.Services
 {
     public class RoomService : IRoomService
     {
-        public readonly IRoomRespository _respository;
-        private readonly IMapper _mapper;
+        public readonly IRoomRepository _repository;
 
-        public RoomService(IRoomRespository respository,
-            IMapper mapper)
+        public RoomService(IRoomRepository repository)
         {
-            _respository = respository;
-            _mapper = mapper;
+            _repository = repository;
         }
 
-        public async Task<(bool IsSucess, List<RoomResponse> Rooms, string Message)> GetAllRoomsActivesAsync()
+        public async Task<(bool IsSuccess, List<RoomResponse> Rooms, string Message)> GetAllRoomsActivesAsync(CancellationToken cancellationToken)
         {
-            try
+            var rooms = await _repository.GetAllAsync(cancellationToken);
+            if (rooms != null && rooms.Any())
             {
-                var rooms = await _respository.GetAllAsync();
-                if (rooms != null && rooms.Any())
-                {
-                    var result = _mapper.Map<List<RoomEntity>, List<RoomResponse>>(rooms);
-                    return (true, result, string.Empty);
-                }
-                return (false, new List<RoomResponse>(), "Not found");
+                var result = ResponseMapper.ToRoomResponseList(rooms);
+                return (true, result, string.Empty);
             }
-            catch (Exception)
-            {
-                throw;
-            }
+
+            return (false, new List<RoomResponse>(), "Not found");
         }
 
-        public async Task<(bool IsSucess, RoomResponse? Room, string Message)> GetByIdAsync(Guid id)
+        public async Task<(bool IsSuccess, RoomResponse? Room, string Message)> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            try
-            {
-                var room = await _respository.GetByIdAsync(id);
-                if (room != null)
-                    return (true, _mapper.Map<RoomEntity, RoomResponse>(room), string.Empty);
+            var room = await _repository.GetByIdAsync(id, cancellationToken);
+            if (room != null)
+                return (true, ResponseMapper.ToRoomResponse(room), string.Empty);
 
-                return (false, null, Message: "Not found");
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return (false, null, Message: "Not found");
         }
     }
 }

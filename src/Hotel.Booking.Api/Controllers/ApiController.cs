@@ -1,5 +1,5 @@
-﻿using Hotel.Booking.Api.Extensions;
-using Hotel.Booking.Api.Shrared;
+using Hotel.Booking.Api.Extensions;
+using Hotel.Booking.Api.Shared;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Net;
@@ -42,6 +42,9 @@ namespace Hotel.Booking.Api.Controllers
 
         protected IActionResult ResponseBadRequest() =>
             Response(HttpStatusCode.BadRequest, errorMessage: "The request is invalid");
+
+        protected IActionResult ResponseConflict(string errorMessage) =>
+            Response(HttpStatusCode.Conflict, errorMessage: errorMessage);
 
         protected IActionResult ResponseNotFound(string errorMessage) =>
             Response(HttpStatusCode.NotFound, errorMessage: errorMessage);

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Context Bootstrap"
+  short_description: "Map repo context before coding"
+  default_prompt: "Use -context-bootstrap to map this repository before making changes."

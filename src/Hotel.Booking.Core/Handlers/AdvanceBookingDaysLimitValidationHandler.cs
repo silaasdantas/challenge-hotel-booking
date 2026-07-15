@@ -1,5 +1,7 @@
 ﻿using Hotel.Booking.Core.Interfaces;
 
+using Hotel.Booking.Core.Exceptions;
+
 namespace Hotel.Booking.Core.Handlers
 {
     internal class AdvanceBookingDaysLimitValidationHandler : Handler, IHandler
@@ -8,8 +10,8 @@ namespace Hotel.Booking.Core.Handlers
         {
             var advanceBookingDaysLimit = 30;
 
-            if ((DateTime.Now.AddDays(advanceBookingDaysLimit).Date - checkIn.Date).Days <= -1)
-                throw new Exception($"Rooms can`t be reserved more than {advanceBookingDaysLimit} days in advance.");
+            if ((DateTime.Today.AddDays(advanceBookingDaysLimit) - checkIn.Date).Days <= -1)
+                throw new BookingValidationException($"Rooms can`t be reserved more than {advanceBookingDaysLimit} days in advance.");
 
             base.Handle(checkIn, checkOut);
         }

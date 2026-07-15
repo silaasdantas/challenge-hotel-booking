@@ -1,4 +1,4 @@
-using Hotel.Booking.Api;
+﻿using Hotel.Booking.Api;
 using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.Services;
 using Hotel.Booking.Infra.Data.Db;
@@ -10,7 +10,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.AddConfigureServices();
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+const string frontendCorsPolicy = "FrontendDevelopment";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(frontendCorsPolicy, policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
@@ -21,7 +33,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseRouting();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors(frontendCorsPolicy);
+}
+
+app.UseRateLimiter();
 
 app.UseAuthorization();
 
@@ -36,3 +60,4 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+

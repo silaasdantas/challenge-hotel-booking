@@ -1,5 +1,7 @@
 ﻿using Hotel.Booking.Core.Interfaces;
 
+using Hotel.Booking.Core.Exceptions;
+
 namespace Hotel.Booking.Core.Handlers
 {
     internal class StayLimitValidationHandler : Handler, IHandler
@@ -10,7 +12,7 @@ namespace Hotel.Booking.Core.Handlers
             var stayLimit = 3;
 
             if ((checkOut.Date - checkIn.Date).Days > stayLimit)
-                throw new Exception($"Rooms can`t be reserved for more than {stayLimit} days.");
+                throw new BookingValidationException($"Rooms can`t be reserved for more than {stayLimit} days.");
 
             base.Handle(checkIn, checkOut);
         }
