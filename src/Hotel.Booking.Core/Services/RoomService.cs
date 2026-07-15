@@ -14,38 +14,25 @@ namespace Hotel.Booking.Core.Services
             _repository = repository;
         }
 
-        public async Task<(bool IsSuccess, List<RoomResponse> Rooms, string Message)> GetAllRoomsActivesAsync()
+        public async Task<(bool IsSuccess, List<RoomResponse> Rooms, string Message)> GetAllRoomsActivesAsync(CancellationToken cancellationToken)
         {
-            try
+            var rooms = await _repository.GetAllAsync(cancellationToken);
+            if (rooms != null && rooms.Any())
             {
-                var rooms = await _repository.GetAllAsync();
-                if (rooms != null && rooms.Any())
-                {
-                    var result = ResponseMapper.ToRoomResponseList(rooms);
-                    return (true, result, string.Empty);
-                }
-                return (false, new List<RoomResponse>(), "Not found");
+                var result = ResponseMapper.ToRoomResponseList(rooms);
+                return (true, result, string.Empty);
             }
-            catch (Exception)
-            {
-                throw;
-            }
+
+            return (false, new List<RoomResponse>(), "Not found");
         }
 
-        public async Task<(bool IsSuccess, RoomResponse? Room, string Message)> GetByIdAsync(Guid id)
+        public async Task<(bool IsSuccess, RoomResponse? Room, string Message)> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            try
-            {
-                var room = await _repository.GetByIdAsync(id);
-                if (room != null)
-                    return (true, ResponseMapper.ToRoomResponse(room), string.Empty);
+            var room = await _repository.GetByIdAsync(id, cancellationToken);
+            if (room != null)
+                return (true, ResponseMapper.ToRoomResponse(room), string.Empty);
 
-                return (false, null, Message: "Not found");
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return (false, null, Message: "Not found");
         }
     }
 }

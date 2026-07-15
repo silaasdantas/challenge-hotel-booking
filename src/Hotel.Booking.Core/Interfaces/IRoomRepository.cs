@@ -4,7 +4,7 @@ namespace Hotel.Booking.Core.Interfaces
 {
     public interface IRoomRepository
     {
-        Task<List<RoomEntity>> GetAllAsync();
-        Task<RoomEntity> GetByIdAsync(Guid id);
+        Task<List<RoomEntity>> GetAllAsync(CancellationToken cancellationToken);
+        Task<RoomEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     }
 }

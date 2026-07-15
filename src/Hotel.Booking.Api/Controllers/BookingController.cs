@@ -2,12 +2,15 @@ using Hotel.Booking.Core.DTOs;
 using Hotel.Booking.Core.Exceptions;
 using Hotel.Booking.Core.Interfaces;
 using Hotel.Booking.Core.Results;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hotel.Booking.Api.Controllers
 {
     public class BookingController : ApiController
     {
+        private const string UnexpectedErrorMessage = "An unexpected error occurred.";
+
         private readonly IBookingService _service;
         private readonly ILogger<BookingController> _logger;
 
@@ -18,11 +21,11 @@ namespace Hotel.Booking.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAsync()
+        public async Task<IActionResult> GetAllAsync(CancellationToken cancellationToken)
         {
             try
             {
-                var result = await _service.GetAllAsync();
+                var result = await _service.GetAllAsync(cancellationToken);
                 if (result.IsSuccess)
                     return ResponseOk(result.Bookings);
 
@@ -30,17 +33,17 @@ namespace Hotel.Booking.Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex.ToString());
-                return ResponseBadRequest(ex.Message);
+                _logger.LogError(ex, "Failed to list bookings.");
+                return ResponseBadRequest(UnexpectedErrorMessage);
             }
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetByIdAsync(Guid id)
+        public async Task<IActionResult> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             try
             {
-                var result = await _service.GetByIdAsync(id);
+                var result = await _service.GetByIdAsync(id, cancellationToken);
                 if (result.IsSuccess)
                     return ResponseOk(result.Booking);
 
@@ -48,19 +51,20 @@ namespace Hotel.Booking.Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex.ToString());
-                return ResponseBadRequest(ex.Message);
+                _logger.LogError(ex, "Failed to get booking {BookingId}.", id);
+                return ResponseBadRequest(UnexpectedErrorMessage);
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> BookAsync(BookingRequest request)
+        [EnableRateLimiting(ServiceCollection.SensitiveEndpointRateLimitPolicy)]
+        public async Task<IActionResult> BookAsync(BookingRequest request, CancellationToken cancellationToken)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    var result = await _service.BookRoomAsync(request);
+                    var result = await _service.BookRoomAsync(request, cancellationToken);
                     if (result.IsSuccess)
                         return ResponseCreated(result.Booking);
 
@@ -74,20 +78,21 @@ namespace Hotel.Booking.Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex.ToString());
-                return BadRequest(ex.Message);
+                _logger.LogError(ex, "Failed to create booking for room {RoomId}.", request.RoomId);
+                return ResponseBadRequest(UnexpectedErrorMessage);
             }
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateAsync(UpdateBookingRequest request)
+        [EnableRateLimiting(ServiceCollection.SensitiveEndpointRateLimitPolicy)]
+        public async Task<IActionResult> UpdateAsync(UpdateBookingRequest request, CancellationToken cancellationToken)
         {
             try
             {
 
                 if (ModelState.IsValid)
                 {
-                    var result = await _service.UpdateAsync(request);
+                    var result = await _service.UpdateAsync(request, cancellationToken);
                     if (result.IsSuccess)
                         return ResponseOk(result.Booking);
 
@@ -101,17 +106,18 @@ namespace Hotel.Booking.Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex.ToString());
-                return ResponseBadRequest(ex.Message);
+                _logger.LogError(ex, "Failed to update booking {BookingId}.", request.BookingId);
+                return ResponseBadRequest(UnexpectedErrorMessage);
             }
         }
 
         [HttpPut("cancel/{id}")]
-        public async Task<IActionResult> CancelAsync(Guid id)
+        [EnableRateLimiting(ServiceCollection.SensitiveEndpointRateLimitPolicy)]
+        public async Task<IActionResult> CancelAsync(Guid id, CancellationToken cancellationToken)
         {
             try
             {
-                var result = await _service.CancelAsync(id);
+                var result = await _service.CancelAsync(id, cancellationToken);
                 if (result.IsSuccess)
                     return ResponseOk(result.Message);
 
@@ -119,17 +125,18 @@ namespace Hotel.Booking.Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex.ToString());
-                return ResponseBadRequest(ex.Message);
+                _logger.LogError(ex, "Failed to cancel booking {BookingId}.", id);
+                return ResponseBadRequest(UnexpectedErrorMessage);
             }
         }
 
         [HttpPut("checkout/{id}")]
-        public async Task<IActionResult> CheckOutAsync(Guid id)
+        [EnableRateLimiting(ServiceCollection.SensitiveEndpointRateLimitPolicy)]
+        public async Task<IActionResult> CheckOutAsync(Guid id, CancellationToken cancellationToken)
         {
             try
             {
-                var result = await _service.CheckOutAsync(id);
+                var result = await _service.CheckOutAsync(id, cancellationToken);
                 if (result.IsSuccess)
                     return ResponseOk(result.Message);
 
@@ -137,19 +144,20 @@ namespace Hotel.Booking.Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex.ToString());
-                return ResponseBadRequest(ex.Message);
+                _logger.LogError(ex, "Failed to check out booking {BookingId}.", id);
+                return ResponseBadRequest(UnexpectedErrorMessage);
             }
         }
 
         [HttpPost("check-availability")]
-        public async Task<IActionResult> CheckRoomAvailabilityAsync([FromBody] AvailabilityRequest request)
+        [EnableRateLimiting(ServiceCollection.SensitiveEndpointRateLimitPolicy)]
+        public async Task<IActionResult> CheckRoomAvailabilityAsync([FromBody] AvailabilityRequest request, CancellationToken cancellationToken)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    var result = await _service.CheckAvailabilityAsync(request);
+                    var result = await _service.CheckAvailabilityAsync(request, cancellationToken);
                     if (result.IsSuccess)
                     {
                         var status = result.Status.ToString();
@@ -170,8 +178,8 @@ namespace Hotel.Booking.Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex.ToString());
-                return ResponseBadRequest(ex.Message);
+                _logger.LogError(ex, "Failed to check availability for room {RoomId}.", request.RoomId);
+                return ResponseBadRequest(UnexpectedErrorMessage);
             }
         }
 

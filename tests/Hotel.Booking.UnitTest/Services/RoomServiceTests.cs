@@ -15,17 +15,16 @@ namespace Hotel.Booking.Core.Services.Tests
         public RoomServiceTests()
         {
             repositoryMock = new Mock<IRoomRepository>();
-
             service = new RoomService(repositoryMock.Object);
         }
 
         [Fact]
         public async Task MustReturnAListRooms_GetAllRoomsActives()
         {
-            repositoryMock.Setup(_ => _.GetAllAsync())
+            repositoryMock.Setup(_ => _.GetAllAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<RoomEntity> { CreateRoom() });
 
-            var result = await service.GetAllRoomsActivesAsync();
+            var result = await service.GetAllRoomsActivesAsync(CancellationToken.None);
 
             result.IsSuccess.ShouldBeTrue();
             result.Rooms.ShouldNotBeEmpty();
@@ -35,10 +34,10 @@ namespace Hotel.Booking.Core.Services.Tests
         [Fact]
         public async Task MustReturnAListRoomsEmpty_GetAllRoomsActives()
         {
-            repositoryMock.Setup(_ => _.GetAllAsync())
+            repositoryMock.Setup(_ => _.GetAllAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<RoomEntity>());
 
-            var result = await service.GetAllRoomsActivesAsync();
+            var result = await service.GetAllRoomsActivesAsync(CancellationToken.None);
 
             result.IsSuccess.ShouldBeFalse();
             result.Rooms.ShouldBeEmpty();
@@ -48,10 +47,10 @@ namespace Hotel.Booking.Core.Services.Tests
         [Fact]
         public async Task MustReturnOneRoomById_GetByIdAsync()
         {
-            repositoryMock.Setup(_ => _.GetByIdAsync(RoomId))
+            repositoryMock.Setup(_ => _.GetByIdAsync(RoomId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateRoom());
 
-            var result = await service.GetByIdAsync(RoomId);
+            var result = await service.GetByIdAsync(RoomId, CancellationToken.None);
 
             result.IsSuccess.ShouldBeTrue();
             result.Room.ShouldNotBeNull();
@@ -62,10 +61,10 @@ namespace Hotel.Booking.Core.Services.Tests
         public async Task MustReturnNotFound_WhenRoomDoesNotExist_GetByIdAsync()
         {
             var roomId = Guid.NewGuid();
-            repositoryMock.Setup(_ => _.GetByIdAsync(roomId))
-                .ReturnsAsync((RoomEntity)null!);
+            repositoryMock.Setup(_ => _.GetByIdAsync(roomId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((RoomEntity?)null);
 
-            var result = await service.GetByIdAsync(roomId);
+            var result = await service.GetByIdAsync(roomId, CancellationToken.None);
 
             result.IsSuccess.ShouldBeFalse();
             result.Room.ShouldBeNull();
