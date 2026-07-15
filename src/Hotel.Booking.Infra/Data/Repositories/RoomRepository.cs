@@ -10,8 +10,8 @@ namespace Hotel.Booking.Infra.Data.Repositories
         public RoomRepository(HotelDbContext dbContext)
             : base(dbContext) { }
 
-        public async Task<List<RoomEntity>> GetAllAsync() => 
-            await _dbSet.AsNoTracking().Where(_ => _.IsActive).ToListAsync();
+        public async Task<List<RoomEntity>> GetAllAsync(CancellationToken cancellationToken) => 
+            await _dbSet.AsNoTracking().Where(_ => _.IsActive).ToListAsync(cancellationToken);
         
     }
 }

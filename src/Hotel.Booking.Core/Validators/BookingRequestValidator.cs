@@ -15,10 +15,12 @@ namespace Hotel.Booking.Core.Validators
 
         public static void ValidateForAvailability(BookingRequest request)
         {
-            if (request.RoomId == Guid.Empty)
-                throw new BookingValidationException("RoomId is required.");
+            ValidateForAvailability(request.RoomId, request.CheckIn, request.CheckOut);
+        }
 
-            ValidateDates(request.CheckIn, request.CheckOut);
+        public static void ValidateForAvailability(AvailabilityRequest request)
+        {
+            ValidateForAvailability(request.RoomId, request.CheckIn, request.CheckOut);
         }
 
         public static void ValidateForUpdate(UpdateBookingRequest request)
@@ -27,6 +29,14 @@ namespace Hotel.Booking.Core.Validators
                 throw new BookingValidationException("BookingId is required.");
 
             ValidateDates(request.CheckIn, request.CheckOut);
+        }
+
+        private static void ValidateForAvailability(Guid roomId, DateTime checkIn, DateTime checkOut)
+        {
+            if (roomId == Guid.Empty)
+                throw new BookingValidationException("RoomId is required.");
+
+            ValidateDates(checkIn, checkOut);
         }
 
         private static void ValidateDates(DateTime checkIn, DateTime checkOut)

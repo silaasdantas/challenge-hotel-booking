@@ -55,7 +55,7 @@ Frontend rule: always check `success`. Use `data` only when `success` is `true`;
 
 ### BookingRequest
 
-Used to create a booking and check availability.
+Used to create a booking.
 
 ```json
 {
@@ -66,7 +66,17 @@ Used to create a booking and check availability.
 }
 ```
 
-For `check-availability`, the service does not use `guestName`, but the API currently receives the same DTO and may validate it through `ModelState`. Send a non-empty `guestName` until a dedicated availability request DTO exists.
+### AvailabilityRequest
+
+Used to check room availability.
+
+```json
+{
+  "roomId": "0b5786eb-cb60-4e89-bb4a-212d58d5efcd",
+  "checkIn": "2026-07-10T00:00:00",
+  "checkOut": "2026-07-12T00:00:00"
+}
+```
 
 ### UpdateBookingRequest
 
@@ -260,7 +270,7 @@ POST /api/v1/booking/check-availability
 Content-Type: application/json
 ```
 
-Request: `BookingRequest`.
+Request: `AvailabilityRequest`.
 
 Success `200`:
 

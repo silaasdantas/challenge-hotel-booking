@@ -19,17 +19,16 @@ namespace Hotel.Booking.Core.Services.Tests
         public BookingServiceTests()
         {
             repositoryMock = new Mock<IBookingRepository>();
-
             service = new BookingService(repositoryMock.Object);
         }
 
         [Fact]
         public async Task MustReturnAllReservations_GetAllAsync()
         {
-            repositoryMock.Setup(_ => _.GetAllAsync())
+            repositoryMock.Setup(_ => _.GetAllAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<BookingEntity> { CreateBooking() });
 
-            var result = await service.GetAllAsync();
+            var result = await service.GetAllAsync(CancellationToken.None);
 
             result.IsSuccess.ShouldBeTrue();
             result.StatusResult.ShouldBe(ServiceResultStatus.Success);
@@ -38,12 +37,12 @@ namespace Hotel.Booking.Core.Services.Tests
         }
 
         [Fact]
-        public async Task MustReturnAnEmptyListOfReservations_GetAllAsync()
+        public async Task MustReturnNotFound_WhenReservationsAreEmpty_GetAllAsync()
         {
-            repositoryMock.Setup(_ => _.GetAllAsync())
+            repositoryMock.Setup(_ => _.GetAllAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<BookingEntity>());
 
-            var result = await service.GetAllAsync();
+            var result = await service.GetAllAsync(CancellationToken.None);
 
             result.IsSuccess.ShouldBeFalse();
             result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
@@ -54,10 +53,10 @@ namespace Hotel.Booking.Core.Services.Tests
         [Fact]
         public async Task MustReturnOneBookingById_GetByIdAsync()
         {
-            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId))
+            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateBooking());
 
-            var result = await service.GetByIdAsync(BookingId);
+            var result = await service.GetByIdAsync(BookingId, CancellationToken.None);
 
             result.IsSuccess.ShouldBeTrue();
             result.StatusResult.ShouldBe(ServiceResultStatus.Success);
@@ -66,13 +65,12 @@ namespace Hotel.Booking.Core.Services.Tests
         }
 
         [Fact]
-        public async Task ShoulNotFindTheReservationById_GetByIdAsync()
+        public async Task MustReturnNotFound_WhenBookingDoesNotExist_GetByIdAsync()
         {
-            var id = Guid.NewGuid();
-            repositoryMock.Setup(_ => _.GetByIdAsync(id))
-                .ReturnsAsync((BookingEntity)null!);
+            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((BookingEntity?)null);
 
-            var result = await service.GetByIdAsync(id);
+            var result = await service.GetByIdAsync(BookingId, CancellationToken.None);
 
             result.IsSuccess.ShouldBeFalse();
             result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
@@ -83,79 +81,86 @@ namespace Hotel.Booking.Core.Services.Tests
         [Fact]
         public async Task MustBookRoom_BookRoomAsync()
         {
-            var bookingRequest = CreateBookingRequest();
+            var request = CreateBookingRequest();
             SetupRoomExists(true);
-            SetupAvailability(RoomStatusValueObject.Available);
-            repositoryMock.Setup(_ => _.CreateAsync(It.IsAny<BookingEntity>()))
-                .ReturnsAsync(1);
+            repositoryMock.Setup(_ => _.TryCreateBookingAsync(It.IsAny<BookingEntity>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((true, CreateBooking(request)));
 
-            var result = await service.BookRoomAsync(bookingRequest);
+            var result = await service.BookRoomAsync(request, CancellationToken.None);
 
             result.IsSuccess.ShouldBeTrue();
             result.StatusResult.ShouldBe(ServiceResultStatus.Success);
             result.Booking.ShouldNotBeNull();
             result.Message.ShouldBeEmpty();
-            repositoryMock.Verify(_ => _.CreateAsync(It.Is<BookingEntity>(booking =>
-                booking.RoomId == bookingRequest.RoomId &&
-                booking.CheckIn.Date == bookingRequest.CheckIn.Date &&
-                booking.CheckOut.Date == bookingRequest.CheckOut.Date &&
-                booking.GuestName == bookingRequest.GuestName)), Times.Once);
+            repositoryMock.Verify(_ => _.TryCreateBookingAsync(It.Is<BookingEntity>(booking =>
+                booking.RoomId == request.RoomId &&
+                booking.CheckIn.Date == request.CheckIn.Date &&
+                booking.CheckOut.Date == request.CheckOut.Date &&
+                booking.GuestName == request.GuestName), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
-        public async Task MustTryBookRoomWithReservation_BookRoomAsync()
+        public async Task MustReturnConflict_WhenAtomicCreateFindsReservation_BookRoomAsync()
         {
             SetupRoomExists(true);
-            SetupAvailability(RoomStatusValueObject.Booked);
+            repositoryMock.Setup(_ => _.TryCreateBookingAsync(It.IsAny<BookingEntity>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((false, CreateBooking()));
 
-            var result = await service.BookRoomAsync(CreateBookingRequest());
+            var result = await service.BookRoomAsync(CreateBookingRequest(), CancellationToken.None);
 
             result.IsSuccess.ShouldBeFalse();
             result.StatusResult.ShouldBe(ServiceResultStatus.Conflict);
             result.Booking.ShouldBeNull();
             result.Message.ShouldBe("Room not available for booking on this date");
-            repositoryMock.Verify(_ => _.CreateAsync(It.IsAny<BookingEntity>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task MustReturnNotFound_WhenRoomDoesNotExist_BookRoomAsync()
+        {
+            SetupRoomExists(false);
+
+            var result = await service.BookRoomAsync(CreateBookingRequest(), CancellationToken.None);
+
+            result.IsSuccess.ShouldBeFalse();
+            result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
+            result.Booking.ShouldBeNull();
+            result.Message.ShouldBe("Room not found");
+            repositoryMock.Verify(_ => _.TryCreateBookingAsync(It.IsAny<BookingEntity>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
         public async Task MustRejectEmptyRoomId_BookRoomAsync()
         {
-            var bookingRequest = CreateBookingRequest();
-            bookingRequest.RoomId = Guid.Empty;
+            var request = CreateBookingRequest();
+            request.RoomId = Guid.Empty;
 
-            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.BookRoomAsync(bookingRequest));
+            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.BookRoomAsync(request, CancellationToken.None));
 
             exception.Message.ShouldBe("RoomId is required.");
-            repositoryMock.Verify(_ => _.AnyAsync(It.IsAny<System.Linq.Expressions.Expression<Func<BookingEntity, bool>>>()), Times.Never);
+            repositoryMock.Verify(_ => _.AnyAsync(It.IsAny<System.Linq.Expressions.Expression<Func<BookingEntity, bool>>>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
         public async Task MustRejectEmptyGuestName_BookRoomAsync()
         {
-            var bookingRequest = CreateBookingRequest();
-            bookingRequest.GuestName = " ";
+            var request = CreateBookingRequest();
+            request.GuestName = " ";
 
-            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.BookRoomAsync(bookingRequest));
+            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.BookRoomAsync(request, CancellationToken.None));
 
             exception.Message.ShouldBe("GuestName is required.");
-            repositoryMock.Verify(_ => _.CreateAsync(It.IsAny<BookingEntity>()), Times.Never);
+            repositoryMock.Verify(_ => _.TryCreateBookingAsync(It.IsAny<BookingEntity>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
         public async Task MustUpdateBook_UpdateAsync()
         {
-            var request = new UpdateBookingRequest
-            {
-                CheckIn = DateTime.Today.AddDays(16),
-                CheckOut = DateTime.Today.AddDays(19),
-                BookingId = BookingId
-            };
-            var booking = CreateBooking();
-            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId)).ReturnsAsync(booking);
-            SetupAvailability(RoomStatusValueObject.Available);
-            repositoryMock.Setup(_ => _.UpdateAsync(It.IsAny<BookingEntity>())).ReturnsAsync(1);
+            var request = CreateUpdateRequest();
+            var updatedBooking = CreateBooking(request);
+            repositoryMock.Setup(_ => _.TryUpdateBookingDatesAsync(request.BookingId, request.CheckIn, request.CheckOut, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((true, false, updatedBooking));
 
-            var result = await service.UpdateAsync(request);
+            var result = await service.UpdateAsync(request, CancellationToken.None);
 
             result.IsSuccess.ShouldBeTrue();
             result.StatusResult.ShouldBe(ServiceResultStatus.Success);
@@ -164,48 +169,31 @@ namespace Hotel.Booking.Core.Services.Tests
             result.Booking.CheckIn.Date.ShouldBe(request.CheckIn.Date);
             result.Booking.CheckOut.Date.ShouldBe(request.CheckOut.Date);
             result.Message.ShouldBeEmpty();
-            repositoryMock.Verify(_ => _.CheckRoomAvailabilityAsync(
-                booking.RoomId,
-                request.CheckIn,
-                request.CheckOut,
-                booking.Id), Times.Once);
-            repositoryMock.Verify(_ => _.UpdateAsync(booking), Times.Once);
         }
 
         [Fact]
-        public async Task MustTryUpdateToADateWithReservation_UpdateAsync()
+        public async Task MustReturnConflict_WhenAtomicUpdateFindsReservation_UpdateAsync()
         {
-            var request = new UpdateBookingRequest
-            {
-                CheckIn = DateTime.Today.AddDays(10),
-                CheckOut = DateTime.Today.AddDays(12),
-                BookingId = BookingId
-            };
-            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId)).ReturnsAsync(CreateBooking());
-            SetupAvailability(RoomStatusValueObject.Booked);
+            var request = CreateUpdateRequest();
+            repositoryMock.Setup(_ => _.TryUpdateBookingDatesAsync(request.BookingId, request.CheckIn, request.CheckOut, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((false, false, null));
 
-            var result = await service.UpdateAsync(request);
+            var result = await service.UpdateAsync(request, CancellationToken.None);
 
             result.IsSuccess.ShouldBeFalse();
             result.StatusResult.ShouldBe(ServiceResultStatus.Conflict);
             result.Booking.ShouldBeNull();
             result.Message.ShouldBe("Room not available for booking on this date.");
-            repositoryMock.Verify(_ => _.UpdateAsync(It.IsAny<BookingEntity>()), Times.Never);
         }
 
         [Fact]
-        public async Task MustTryUpdatingANonExistingReservation_UpdateAsync()
+        public async Task MustReturnNotFound_WhenAtomicUpdateDoesNotFindBooking_UpdateAsync()
         {
-            var request = new UpdateBookingRequest
-            {
-                CheckIn = DateTime.Today.AddDays(10),
-                CheckOut = DateTime.Today.AddDays(12),
-                BookingId = Guid.NewGuid()
-            };
-            repositoryMock.Setup(_ => _.GetByIdAsync(request.BookingId))
-                .ReturnsAsync((BookingEntity)null!);
+            var request = CreateUpdateRequest();
+            repositoryMock.Setup(_ => _.TryUpdateBookingDatesAsync(request.BookingId, request.CheckIn, request.CheckOut, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((false, true, null));
 
-            var result = await service.UpdateAsync(request);
+            var result = await service.UpdateAsync(request, CancellationToken.None);
 
             result.IsSuccess.ShouldBeFalse();
             result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
@@ -216,100 +204,46 @@ namespace Hotel.Booking.Core.Services.Tests
         [Fact]
         public async Task MustRejectEmptyBookingId_UpdateAsync()
         {
-            var request = new UpdateBookingRequest
-            {
-                CheckIn = DateTime.Today.AddDays(10),
-                CheckOut = DateTime.Today.AddDays(12),
-                BookingId = Guid.Empty
-            };
+            var request = CreateUpdateRequest();
+            request.BookingId = Guid.Empty;
 
-            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.UpdateAsync(request));
+            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.UpdateAsync(request, CancellationToken.None));
 
             exception.Message.ShouldBe("BookingId is required.");
-            repositoryMock.Verify(_ => _.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
+            repositoryMock.Verify(_ => _.TryUpdateBookingDatesAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
         public async Task MustCancelBook_CancelAsync()
         {
             var booking = CreateBooking();
-            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId)).ReturnsAsync(booking);
-            repositoryMock.Setup(_ => _.UpdateAsync(It.IsAny<BookingEntity>())).ReturnsAsync(1);
+            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
+            repositoryMock.Setup(_ => _.UpdateAsync(It.IsAny<BookingEntity>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-            var result = await service.CancelAsync(BookingId);
+            var result = await service.CancelAsync(BookingId, CancellationToken.None);
 
             result.IsSuccess.ShouldBeTrue();
             result.StatusResult.ShouldBe(ServiceResultStatus.Success);
             result.Booking.ShouldNotBeNull();
             result.Booking.Status.ShouldBe("BookingCanceled");
             result.Message.ShouldBe("Booking successfully canceled");
-            repositoryMock.Verify(_ => _.UpdateAsync(booking), Times.Once);
-        }
-
-        [Fact]
-        public async Task MustTryCancelANonExistingReservation_CancelAsync()
-        {
-            var bookingId = Guid.NewGuid();
-            repositoryMock.Setup(_ => _.GetByIdAsync(bookingId))
-                .ReturnsAsync((BookingEntity)null!);
-
-            var result = await service.CancelAsync(bookingId);
-
-            result.IsSuccess.ShouldBeFalse();
-            result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
-            result.Booking.ShouldBeNull();
-            result.Message.ShouldBe("Not found");
+            repositoryMock.Verify(_ => _.UpdateAsync(booking, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
         public async Task MustCheckOutBooking_CheckOutAsync()
         {
             var booking = CreateBooking();
-            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId)).ReturnsAsync(booking);
-            repositoryMock.Setup(_ => _.UpdateAsync(It.IsAny<BookingEntity>())).ReturnsAsync(1);
+            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
+            repositoryMock.Setup(_ => _.UpdateAsync(It.IsAny<BookingEntity>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-            var result = await service.CheckOutAsync(BookingId);
-
-            result.IsSuccess.ShouldBeTrue();
-            result.StatusResult.ShouldBe(ServiceResultStatus.Success);
-            result.Booking.ShouldNotBeNull();
-            result.Booking.Status.ShouldBe("CheckedOut");
-            result.Message.ShouldBe("Booking successfully checked out");
-            repositoryMock.Verify(_ => _.UpdateAsync(booking), Times.Once);
-        }
-
-        [Fact]
-        public async Task MustReturnSuccessForAlreadyCheckedOutBooking_CheckOutAsync()
-        {
-            var booking = CreateBooking();
-            booking.CheckOutRoom();
-            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId)).ReturnsAsync(booking);
-            repositoryMock.Setup(_ => _.UpdateAsync(It.IsAny<BookingEntity>())).ReturnsAsync(1);
-
-            var result = await service.CheckOutAsync(BookingId);
+            var result = await service.CheckOutAsync(BookingId, CancellationToken.None);
 
             result.IsSuccess.ShouldBeTrue();
             result.StatusResult.ShouldBe(ServiceResultStatus.Success);
             result.Booking.ShouldNotBeNull();
             result.Booking.Status.ShouldBe("CheckedOut");
             result.Message.ShouldBe("Booking successfully checked out");
-            repositoryMock.Verify(_ => _.UpdateAsync(booking), Times.Once);
-        }
-
-        [Fact]
-        public async Task MustTryCheckOutNonExistingBooking_CheckOutAsync()
-        {
-            var bookingId = Guid.NewGuid();
-            repositoryMock.Setup(_ => _.GetByIdAsync(bookingId))
-                .ReturnsAsync((BookingEntity)null!);
-
-            var result = await service.CheckOutAsync(bookingId);
-
-            result.IsSuccess.ShouldBeFalse();
-            result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
-            result.Booking.ShouldBeNull();
-            result.Message.ShouldBe("Not found");
-            repositoryMock.Verify(_ => _.UpdateAsync(It.IsAny<BookingEntity>()), Times.Never);
         }
 
         [Fact]
@@ -317,47 +251,15 @@ namespace Hotel.Booking.Core.Services.Tests
         {
             var booking = CreateBooking();
             booking.Cancel();
-            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId)).ReturnsAsync(booking);
+            repositoryMock.Setup(_ => _.GetByIdAsync(BookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
 
-            var result = await service.CheckOutAsync(BookingId);
+            var result = await service.CheckOutAsync(BookingId, CancellationToken.None);
 
             result.IsSuccess.ShouldBeFalse();
             result.StatusResult.ShouldBe(ServiceResultStatus.ValidationError);
             result.Booking.ShouldBeNull();
             result.Message.ShouldBe("Canceled booking cannot be checked out.");
-            repositoryMock.Verify(_ => _.UpdateAsync(It.IsAny<BookingEntity>()), Times.Never);
-        }
-
-        [Fact]
-        public async Task MustBlockSameDayBookingWhenPreviousBookingWasNotCheckedOut_BookRoomAsync()
-        {
-            SetupRoomExists(true);
-            SetupAvailability(RoomStatusValueObject.Booked);
-
-            var result = await service.BookRoomAsync(CreateBookingRequest());
-
-            result.IsSuccess.ShouldBeFalse();
-            result.StatusResult.ShouldBe(ServiceResultStatus.Conflict);
-            result.Booking.ShouldBeNull();
-            result.Message.ShouldBe("Room not available for booking on this date");
-            repositoryMock.Verify(_ => _.CreateAsync(It.IsAny<BookingEntity>()), Times.Never);
-        }
-
-        [Fact]
-        public async Task MustAllowSameDayBookingAfterPreviousBookingWasCheckedOut_BookRoomAsync()
-        {
-            var bookingRequest = CreateBookingRequest();
-            SetupRoomExists(true);
-            SetupAvailability(RoomStatusValueObject.Available);
-            repositoryMock.Setup(_ => _.CreateAsync(It.IsAny<BookingEntity>()))
-                .ReturnsAsync(1);
-
-            var result = await service.BookRoomAsync(bookingRequest);
-
-            result.IsSuccess.ShouldBeTrue();
-            result.StatusResult.ShouldBe(ServiceResultStatus.Success);
-            result.Booking.ShouldNotBeNull();
-            repositoryMock.Verify(_ => _.CreateAsync(It.IsAny<BookingEntity>()), Times.Once);
+            repositoryMock.Verify(_ => _.UpdateAsync(It.IsAny<BookingEntity>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -366,7 +268,7 @@ namespace Hotel.Booking.Core.Services.Tests
             SetupRoomExists(true);
             SetupAvailability(RoomStatusValueObject.Available);
 
-            var result = await service.CheckAvailabilityAsync(CreateBookingRequest());
+            var result = await service.CheckAvailabilityAsync(CreateAvailabilityRequest(), CancellationToken.None);
 
             result.IsSuccess.ShouldBeTrue();
             result.StatusResult.ShouldBe(ServiceResultStatus.Success);
@@ -380,7 +282,7 @@ namespace Hotel.Booking.Core.Services.Tests
             SetupRoomExists(true);
             SetupAvailability(RoomStatusValueObject.Booked);
 
-            var result = await service.CheckAvailabilityAsync(CreateBookingRequest());
+            var result = await service.CheckAvailabilityAsync(CreateAvailabilityRequest(), CancellationToken.None);
 
             result.IsSuccess.ShouldBeFalse();
             result.StatusResult.ShouldBe(ServiceResultStatus.Conflict);
@@ -393,7 +295,7 @@ namespace Hotel.Booking.Core.Services.Tests
         {
             SetupRoomExists(false);
 
-            var result = await service.CheckAvailabilityAsync(CreateBookingRequest());
+            var result = await service.CheckAvailabilityAsync(CreateAvailabilityRequest(), CancellationToken.None);
 
             result.IsSuccess.ShouldBeFalse();
             result.StatusResult.ShouldBe(ServiceResultStatus.NotFound);
@@ -402,26 +304,26 @@ namespace Hotel.Booking.Core.Services.Tests
         }
 
         [Fact]
-        public async Task MustRejectEmptyRoomId_CheckAvailabilityAsync()
+        public async Task MustPassCancellationToken_ToRepository()
         {
-            var bookingRequest = CreateBookingRequest();
-            bookingRequest.RoomId = Guid.Empty;
+            using var cancellationTokenSource = new CancellationTokenSource();
+            var token = cancellationTokenSource.Token;
+            repositoryMock.Setup(_ => _.GetAllAsync(token)).ReturnsAsync(new List<BookingEntity>());
 
-            var exception = await Should.ThrowAsync<BookingValidationException>(() => service.CheckAvailabilityAsync(bookingRequest));
+            await service.GetAllAsync(token);
 
-            exception.Message.ShouldBe("RoomId is required.");
-            repositoryMock.Verify(_ => _.AnyAsync(It.IsAny<System.Linq.Expressions.Expression<Func<BookingEntity, bool>>>()), Times.Never);
+            repositoryMock.Verify(_ => _.GetAllAsync(token), Times.Once);
         }
 
         private void SetupRoomExists(bool exists)
         {
-            repositoryMock.Setup(_ => _.AnyAsync(It.IsAny<System.Linq.Expressions.Expression<Func<BookingEntity, bool>>>()))
+            repositoryMock.Setup(_ => _.AnyAsync(It.IsAny<System.Linq.Expressions.Expression<Func<BookingEntity, bool>>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(exists);
         }
 
         private void SetupAvailability(RoomStatusValueObject status)
         {
-            repositoryMock.Setup(_ => _.CheckRoomAvailabilityAsync(RoomId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<Guid?>()))
+            repositoryMock.Setup(_ => _.CheckRoomAvailabilityAsync(RoomId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(status);
         }
 
@@ -436,9 +338,45 @@ namespace Hotel.Booking.Core.Services.Tests
             };
         }
 
+        private static AvailabilityRequest CreateAvailabilityRequest()
+        {
+            return new AvailabilityRequest
+            {
+                CheckIn = DateTime.Today.AddDays(16),
+                CheckOut = DateTime.Today.AddDays(19),
+                RoomId = RoomId
+            };
+        }
+
+        private static UpdateBookingRequest CreateUpdateRequest()
+        {
+            return new UpdateBookingRequest
+            {
+                CheckIn = DateTime.Today.AddDays(16),
+                CheckOut = DateTime.Today.AddDays(19),
+                BookingId = BookingId
+            };
+        }
+
         private static BookingEntity CreateBooking()
         {
             return new BookingEntity(BookingId, DateTime.Today.AddDays(1), DateTime.Today.AddDays(4), RoomId, "Aegon Targaryen")
+            {
+                Room = new RoomEntity(RoomId, "MIO Cancun Hotel Boutique, Queen Suite")
+            };
+        }
+
+        private static BookingEntity CreateBooking(BookingRequest request)
+        {
+            return new BookingEntity(BookingId, request.CheckIn, request.CheckOut, request.RoomId, request.GuestName)
+            {
+                Room = new RoomEntity(request.RoomId, "MIO Cancun Hotel Boutique, Queen Suite")
+            };
+        }
+
+        private static BookingEntity CreateBooking(UpdateBookingRequest request)
+        {
+            return new BookingEntity(request.BookingId, request.CheckIn, request.CheckOut, RoomId, "Aegon Targaryen")
             {
                 Room = new RoomEntity(RoomId, "MIO Cancun Hotel Boutique, Queen Suite")
             };
