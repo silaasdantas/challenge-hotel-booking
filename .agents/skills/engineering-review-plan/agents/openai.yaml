@@ -1,0 +1,4 @@
+interface:
+  display_name: "Engineering Review Plan"
+  short_description: "Review risks and plan fixes"
+  default_prompt: "Use -review-plan to review this change and propose a minimal implementation plan."

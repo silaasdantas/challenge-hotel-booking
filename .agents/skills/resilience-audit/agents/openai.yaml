@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resilience Audit"
+  short_description: "Find practical resilience gaps"
+  default_prompt: "Use -audit to identify resilience risks and practical fixes in this project."

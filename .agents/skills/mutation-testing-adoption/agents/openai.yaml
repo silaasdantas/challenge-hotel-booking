@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mutation Testing Adoption"
+  short_description: "Adopt mutation testing safely"
+  default_prompt: "Use -testing-adoption to introduce mutation testing incrementally in this project."
